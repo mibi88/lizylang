@@ -51,6 +51,10 @@ int builtin_strdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
                    void *_returned);
 int builtin_numdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
                    void *_returned);
+int builtin_set(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned);
+int builtin_del(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned);
 int builtin_print(void *_lisp, void *_args, void *_parsed, size_t argnum,
                   void *_returned);
 int builtin_printraw(void *_lisp, void *_args, void *_parsed, size_t argnum,

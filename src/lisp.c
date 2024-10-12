@@ -104,6 +104,83 @@ int tl_add_var(TinyLisp *lisp, Var *var, String *name) {
     return TL_SUCCESS;
 }
 
+int tl_set_var(TinyLisp *lisp, Var *var, String *name) {
+    size_t i;
+    char found = 0;
+    int rc;
+    if(lisp->stack_cur){
+        for(i=0;i<lisp->stack[lisp->stack_cur-1].params.size;i++){
+            if(name->len !=
+               lisp->stack[lisp->stack_cur-1].params.items[i].string.len){
+                continue;
+            }
+            if(!memcmp(lisp->stack[lisp->stack_cur-1]
+                       .params.items[i].string.data, name->data, name->len)){
+                /* Set the variable */
+                if(var->type != lisp->stack[lisp->stack_cur-1].args[i].type){
+                    return TL_ERR_BAD_TYPE;
+                }
+                rc = var_free(lisp->stack[lisp->stack_cur-1].args+i);
+                if(rc) return rc;
+                rc = var_copy(var, lisp->stack[lisp->stack_cur-1].args+i);
+                if(rc) return rc;
+                found = 1;
+                break;
+            }
+        }
+    }
+    if(!found){
+        for(i=0;i<lisp->var_num;i++){
+            if(lisp->var_names[i].len != name->len) continue;
+            if(!memcmp(name->data, lisp->var_names[i].data, name->len)){
+                /* Set the variable */
+                if(var->type != lisp->vars[i].type){
+                    return TL_ERR_BAD_TYPE;
+                }
+                rc = var_free(lisp->vars+i);
+                if(rc) return rc;
+                rc = var_copy(var, lisp->vars+i);
+                if(rc) return rc;
+                found = 1;
+                break;
+            }
+        }
+    }
+    if(!found){
+        return TL_ERR_NOT_DEF;
+    }
+    return TL_SUCCESS;
+}
+
+int tl_del_var(TinyLisp *lisp, String *name) {
+    size_t i;
+    char found = 0;
+    int rc;
+    for(i=0;i<lisp->var_num;i++){
+        if(lisp->var_names[i].len != name->len) continue;
+        if(!memcmp(name->data, lisp->var_names[i].data, name->len)){
+            /* Delete the variable */
+            rc = var_free(lisp->vars+i);
+            if(rc) return rc;
+            rc = var_free_str(lisp->var_names+i);
+            if(rc) return rc;
+            if(i < lisp->var_num-1){
+                memmove(lisp->vars+i, lisp->vars+i+1,
+                        sizeof(Var)*lisp->var_num-i-1);
+                memmove(lisp->var_names+i, lisp->var_names+i+1,
+                        sizeof(String)*lisp->var_num-i-1);
+            }
+            lisp->var_num--;
+            found = 1;
+            break;
+        }
+    }
+    if(!found){
+        return TL_ERR_NOT_DEF;
+    }
+    return TL_SUCCESS;
+}
+
 int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
     size_t n;
     char c;

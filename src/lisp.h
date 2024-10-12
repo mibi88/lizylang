@@ -78,6 +78,8 @@ typedef struct {
 
 int tl_init(TinyLisp *lisp, char *buffer, size_t sz);
 int tl_add_var(TinyLisp *lisp, Var *var, String *name);
+int tl_set_var(TinyLisp *lisp, Var *var, String *name);
+int tl_del_var(TinyLisp *lisp, String *name);
 int tl_run(TinyLisp *lisp, void error(char*, void*), void *data);
 int tl_free(TinyLisp *lisp);
 

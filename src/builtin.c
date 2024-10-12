@@ -61,7 +61,8 @@ int builtin_register_funcs(TinyLisp *lisp) {
     /* strdef */
     TL_REGISTER_FUNC("strdef", 0, builtin_strdef);
     TL_REGISTER_FUNC("numdef", 0, builtin_numdef);
-    /* TODO: set and del */
+    TL_REGISTER_FUNC("set", 0, builtin_set);
+    TL_REGISTER_FUNC("del", 0, builtin_del);
     /* comment */
     TL_REGISTER_FUNC("comment", 0, builtin_comment);
     TL_REGISTER_FUNC("print", 1, builtin_print);
@@ -178,6 +179,48 @@ int builtin_numdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
         return rc;
     }
     return TL_SUCCESS;
+}
+
+int builtin_set(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned) {
+    TinyLisp *lisp = _lisp;
+    Var *args = _args;
+    Var value;
+    int rc;
+    TL_UNUSED(_parsed);
+    if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
+    else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
+    if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
+    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    rc = call_parse_arg(lisp, args+1, &value);
+    if(rc) return rc;
+    rc = tl_set_var(lisp, &value, &args->items->string);
+    if(rc){
+        var_free(&value);
+        return rc;
+    }
+    rc = var_free(&value);
+    if(rc) return rc;
+    rc = var_num_from_float(_returned, 0);
+    return rc;
+}
+
+int builtin_del(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned) {
+    TinyLisp *lisp = _lisp;
+    Var *args = _args;
+    int rc;
+    TL_UNUSED(_parsed);
+    if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
+    else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
+    if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
+    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    rc = tl_del_var(lisp, &args->items->string);
+    if(rc){
+        return rc;
+    }
+    rc = var_num_from_float(_returned, 0);
+    return rc;
 }
 
 int builtin_print(void *_lisp, void *_args, void *_parsed, size_t argnum,

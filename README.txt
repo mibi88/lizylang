@@ -10,7 +10,7 @@ Here is a TODO list of what will come next:
 
     TODO
 
-[ ] Set and delete variables (currently they can only be defined).
+[x] Set and delete variables (currently they can only be defined).
 [ ] List management with head and tail.
 [ ] Optimize tail recursion.
 [ ] Variable amount of arguments passed to user defined functions.
