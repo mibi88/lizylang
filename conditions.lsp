@@ -1,0 +1,23 @@
+(comment "CHANGELOG
+          2024/10/12: Created this file.")
+
+(comment "Test the if function")
+(print (if 2 "True" "False"))
+(print (if 0 "True" "False"))
+(print (if -1 "True" "False"))
+
+(comment "Test the comparison functions")
+(print (if (< 1 3) "True" 0))
+(print (if (< 3 1) "True" "False"))
+(print (if (> 1 3) "True" 0))
+(print (if (> 3 1) "True" "False"))
+(print (if (= "a" "a") "True" 0))
+(print (if (= "a" "b") "True" 0))
+(print (if (!= "a" "a") "True" 0))
+(print (if (!= "a" "b") "True" 0))
+(print (if (<= 1 3) "True" 0))
+(print (if (<= 3 1) "True" "False"))
+(print (if (<= 3 3) "True" "False"))
+(print (if (>= 1 3) "True" 0))
+(print (if (>= 3 1) "True" "False"))
+(print (if (>= 3 3) "True" "False"))
