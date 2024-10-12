@@ -140,7 +140,8 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
         "Function definition not ended!",
         "Invalid name!",
         "Stack overflow!",
-        "Division by zero!"
+        "Division by zero!",
+        "Bad input!"
     };
     lisp->line = 1;
     for(lisp->i=0;lisp->i<lisp->sz;lisp->i++){

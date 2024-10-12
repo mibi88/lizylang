@@ -768,6 +768,9 @@ int builtin_parsenum(void *_lisp, void *_args, void *_parsed, size_t argnum,
     if(args[0].type != TL_T_STR){
         return TL_ERR_BAD_TYPE;
     }
+    if(!var_isnum(args[0].items->string.data, args[0].items->string.len)){
+        return TL_ERR_BAD_INPUT;
+    }
     rc = var_num(_returned, args[0].items->string.data,
                  args[0].items->string.len);
     return rc;
