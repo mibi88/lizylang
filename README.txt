@@ -24,6 +24,11 @@ Here is a TODO list of what will come next:
 [ ] Foreign function interface.
 [ ] Generate bytecode?
 
+    KNOWN BUGS
+
+[ ] Memory leak when name not defined.
+[ ] Multiple values returned from user function.
+
     CHANGELOG
 
 2024/10/12: Created this file.
