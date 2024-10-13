@@ -44,7 +44,8 @@
  * 2024/10/09: Do not call functions inside a function definition.
  *             Error when redefining variable. Added void list support.
  * 2024/10/12: Call user defined functions with arguments. Return value from
- *             user defined function. Fix leak.
+ *             user defined function. Fix leak. Set and delete variables.
+ * 2024/10/13: Added list management functions.
  */
 
 #include <lisp.h>
@@ -218,7 +219,8 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
         "Invalid name!",
         "Stack overflow!",
         "Division by zero!",
-        "Bad input!"
+        "Bad input!",
+        "Index out of range!"
     };
     lisp->line = 1;
     for(lisp->i=0;lisp->i<lisp->sz;lisp->i++){

@@ -42,6 +42,7 @@
  * 2024/10/08: Started adding list support.
  * 2024/10/09: Error when redefining variables and if the function definition
  *             has no end. Added void list support.
+ * 2024/10/13: Added list management functions.
  */
 
 #ifndef DEFS_H
@@ -79,6 +80,7 @@ enum {
     TL_ERR_STACK_OVERFLOW,
     TL_ERR_DIVISION_BY_ZERO,
     TL_ERR_BAD_INPUT,
+    TL_ERR_OUT_OF_RANGE,
     TL_RC_AMOUNT
 };
 

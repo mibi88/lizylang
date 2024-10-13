@@ -103,5 +103,13 @@ int builtin_parsenum(void *_lisp, void *_args, void *_parsed, size_t argnum,
                      void *_returned);
 int builtin_callif(void *_lisp, void *_args, void *_parsed, size_t argnum,
                    void *_returned);
+int builtin_len(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned);
+int builtin_strlen(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                   void *_returned);
+int builtin_get(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned);
+int builtin_strget(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                   void *_returned);
 
 #endif

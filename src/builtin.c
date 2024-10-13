@@ -41,7 +41,8 @@
  *             numdef functions.
  * 2024/10/09: Parse value in numdef and strdef.
  * 2024/10/12: Fix user function calling bugs. Call user defined function with
- *             arguments. Return value from function.
+ *             arguments. Return value from function. Added conditions.
+ * 2024/10/13: Added list management functions.
  */
 
 #include <builtin.h>
@@ -89,6 +90,10 @@ int builtin_register_funcs(TinyLisp *lisp) {
     TL_REGISTER_FUNC("ceil", 1, builtin_ceil);
     TL_REGISTER_FUNC("parsenum", 1, builtin_parsenum);
     TL_REGISTER_FUNC("callif", 0, builtin_callif);
+    TL_REGISTER_FUNC("len", 1, builtin_len);
+    TL_REGISTER_FUNC("get", 1, builtin_get);
+    TL_REGISTER_FUNC("strlen", 1, builtin_strlen);
+    TL_REGISTER_FUNC("strget", 1, builtin_strget);
     /* TODO: numstr: Convert float to string. */
     /* TODO: head and tail */
     return TL_SUCCESS;
@@ -851,4 +856,85 @@ int builtin_callif(void *_lisp, void *_args, void *_parsed, size_t argnum,
         return rc;
     }
     return TL_SUCCESS;
+}
+
+int builtin_len(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned) {
+    Var *args = _parsed;
+    int rc;
+    TL_UNUSED(_lisp);
+    TL_UNUSED(_args);
+    if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
+    else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
+    rc = var_num_from_float(_returned, VAR_LEN(args));
+    return rc;
+}
+
+int builtin_strlen(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                   void *_returned) {
+    Var *args = _parsed;
+    int rc;
+    TL_UNUSED(_lisp);
+    TL_UNUSED(_args);
+    if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
+    else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
+    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    if(args->type != TL_T_STR) return TL_ERR_BAD_TYPE;
+    rc = var_num_from_float(_returned, args->items->string.len);
+    return rc;
+}
+
+int builtin_get(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                void *_returned) {
+    Var *args = _parsed;
+    int rc;
+    int index;
+    TL_UNUSED(_lisp);
+    TL_UNUSED(_args);
+    if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
+    else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
+    if(args[1].type != TL_T_NUM) return TL_ERR_BAD_TYPE;
+    if(VAR_LEN(args+1) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    index = (int)args[1].items->num;
+    if(index < 0 || (size_t)index >= VAR_LEN(args)){
+        return TL_ERR_OUT_OF_RANGE;
+    }
+    switch(args->type){
+        case TL_T_NAME:
+            rc = var_str(_returned, args->items[index].string.data,
+                         args->items[index].string.len);
+            if(!rc) ((Var*)_returned)->type = TL_T_NAME;
+            return rc;
+        case TL_T_STR:
+            rc = var_str(_returned, args->items[index].string.data,
+                         args->items[index].string.len);
+            return rc;
+        case TL_T_NUM:
+            rc = var_num_from_float(_returned, args->items[index].num);
+            return rc;
+        default:
+            return TL_ERR_BAD_TYPE;
+    }
+    return TL_SUCCESS;
+}
+
+int builtin_strget(void *_lisp, void *_args, void *_parsed, size_t argnum,
+                   void *_returned) {
+    Var *args = _parsed;
+    int rc;
+    int index;
+    TL_UNUSED(_lisp);
+    TL_UNUSED(_args);
+    if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
+    else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
+    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    if(VAR_LEN(args+1) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    if(args->type != TL_T_STR) return TL_ERR_BAD_TYPE;
+    if(args[1].type != TL_T_NUM) return TL_ERR_BAD_TYPE;
+    index = (int)args[1].items->num;
+    if(index < 0 || (size_t)index >= args->items->string.len){
+        return TL_ERR_OUT_OF_RANGE;
+    }
+    rc = var_str(_returned, args->items->string.data+index, sizeof(char));
+    return rc;
 }
