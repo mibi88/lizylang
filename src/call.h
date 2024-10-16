@@ -38,6 +38,7 @@
  * 2024/10/03: Adding argument parsing.
  * 2024/10/04: Finished argument parsing.
  * 2024/10/09: Parse single argument with call_parse_arg.
+ * 2024/10/16: Started adding calling back.
  */
 
 #ifndef CALL_H
@@ -47,8 +48,7 @@
 #include <defs.h>
 #include <var.h>
 
-int call_exec(TinyLisp *lisp, Call *call, Var *args, size_t argnum,
-              Var *returned);
+int call_exec(TinyLisp *lisp, Node *node);
 Var *call_parse_args(TinyLisp *lisp, Var *args, size_t argnum, int *rc);
 int call_parse_arg(TinyLisp *lisp, Var *src, Var *dest);
 

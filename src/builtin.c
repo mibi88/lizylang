@@ -43,6 +43,7 @@
  * 2024/10/12: Fix user function calling bugs. Call user defined function with
  *             arguments. Return value from function. Added conditions.
  * 2024/10/13: Added list management functions.
+ * 2024/10/16: Started adding calling back.
  */
 
 #include <builtin.h>
@@ -823,35 +824,7 @@ int builtin_parsenum(void *_lisp, void *_args, void *_parsed, size_t argnum,
 
 int builtin_callif(void *_lisp, void *_args, void *_parsed, size_t argnum,
                    void *_returned) {
-    TinyLisp *lisp = _lisp;
-    Var *args = _args;
-    int rc;
-    Var condition;
-    Var call;
-    TL_UNUSED(_parsed);
-    if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
-    if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
-        return TL_ERR_INVALID_LIST_SIZE;
-    }
-    rc = call_parse_arg(lisp, args, &condition);
-    if(rc) return rc;
-    if(args[1].type != TL_T_NAME || condition.type != TL_T_NUM){
-        return TL_ERR_BAD_TYPE;
-    }
-    if(condition.items->num != 0){
-        var_free(&condition);
-        /* Perform the call */
-        rc = var_call(&call, args[1].items->string.data,
-                      args[1].items->string.len);
-        if(rc) return rc;
-        rc = call_exec(lisp, &call.items->call, args+2, argnum-2, _returned);
-        var_free(&call);
-        if(rc) return rc;
-    }else{
-        var_free(&condition);
-        rc = var_num_from_float(_returned, 1);
-        return rc;
-    }
+    /* TODO: Rewrite it! */
     return TL_SUCCESS;
 }
 

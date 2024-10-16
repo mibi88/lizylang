@@ -48,7 +48,8 @@
  * 2024/10/13: Added list management functions.
  * 2024/10/14: Moved variable management functions down.
  * 2024/10/15: Start generating a tree.
- * 2024/10/16: Add data to the nodes. Finish generating the tree.
+ * 2024/10/16: Add data to the nodes. Finish generating the tree. Better tree
+ *             debugging.
  */
 
 #include <lisp.h>
@@ -146,47 +147,53 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
                         if(current == &lisp->node){
                             TL_ERROR(TL_ERR_VALUE_OUTSIDE_OF_CALL);
                         }
-                        if(current->var->items->call.has_func){
-                            /* Add a node for the value */
+                        if(token_cur){
+                            if(current->var->items->call.has_func){
+                                /* Add a node for the value */
 #if TL_DEBUG_TREE
-                            puts(" |_ Argument");
+                                fputs(" |_ Argument \"", stdout);
+                                fwrite(token, 1, token_cur, stdout);
+                                puts("\"");
 #endif
-                            allocated = malloc(sizeof(Node));
-                            if(!allocated){
-                                TL_ERROR(TL_ERR_OUT_OF_MEM);
+                                allocated = malloc(sizeof(Node));
+                                if(!allocated){
+                                    TL_ERROR(TL_ERR_OUT_OF_MEM);
+                                }
+                                node_data = malloc(sizeof(Node));
+                                if(!node_data){
+                                    free(allocated);
+                                    TL_ERROR(TL_ERR_OUT_OF_MEM);
+                                }
+                                rc = var_auto(node_data, token, token_cur);
+                                if(rc){
+                                    TL_ERROR(rc);
+                                }
+                                rc = node_init(allocated, node_data);
+                                if(rc){
+                                    free(allocated);
+                                    free(node_data);
+                                    TL_ERROR(rc);
+                                }
+                                rc = node_add_child(current, allocated);
+                                if(rc){
+                                    free(allocated);
+                                    free(node_data);
+                                    TL_ERROR(rc);
+                                }
+                            }else{
+                                /* Set the function name. */
+    #if TL_DEBUG_TREE
+                                fputs(" |_ Function name \"", stdout);
+                                fwrite(token, 1, token_cur, stdout);
+                                puts("\"");
+    #endif
+                                var_free_str(&current->var->items->call.function);
+                                var_raw_str(&current->var->items->call.function,
+                                            token, token_cur);
+                                current->var->items->call.has_func = 1;
                             }
-                            node_data = malloc(sizeof(Node));
-                            if(!node_data){
-                                free(allocated);
-                                TL_ERROR(TL_ERR_OUT_OF_MEM);
-                            }
-                            rc = var_auto(node_data, token, token_cur);
-                            if(rc){
-                                TL_ERROR(rc);
-                            }
-                            rc = node_init(allocated, node_data);
-                            if(rc){
-                                free(allocated);
-                                free(node_data);
-                                TL_ERROR(rc);
-                            }
-                            rc = node_add_child(current, allocated);
-                            if(rc){
-                                free(allocated);
-                                free(node_data);
-                                TL_ERROR(rc);
-                            }
-                        }else{
-                            /* Set the function name. */
-#if TL_DEBUG_TREE
-                            puts(" |_ Function name");
-#endif
-                            var_free_str(&current->var->items->call.function);
-                            var_raw_str(&current->var->items->call.function,
-                                        token, token_cur);
-                            current->var->items->call.has_func = 1;
+                            token_cur = 0;
                         }
-                        token_cur = 0;
                     }
                 }else{
                     TL_TOK_ADD(c)
@@ -244,7 +251,9 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
                     /* Check if the string is in a call. If it is, add it to
                      * the current call. */
 #if TL_DEBUG_TREE
-                    puts(" |_ String argument");
+                    fputs(" |_ String argument \"", stdout);
+                    fwrite(token, 1, token_cur, stdout);
+                    puts("\"");
 #endif
                     if(current == &lisp->node){
                         TL_ERROR(TL_ERR_STR_OUT_OF_CALL);
@@ -332,14 +341,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
         escaped = 0;
     }
     for(i=0;i<lisp->node.childnum;i++){
-        /*if(((Node**)lisp->node.childs)[i]->var->type != TL_T_CALL){
-            TL_ERROR(TL_ERR_VALUE_OUTSIDE_OF_CALL);
-        }
-        fwrite(((Node**)lisp->node.childs)[i]->var->items->call.function.data,
-               1,
-               ((Node**)lisp->node.childs)[i]->var->items->call.function.len,
-               stdout);
-        fputc('\n', stdout);*/
+        call_exec(lisp, ((Node**)lisp->node.childs)[i]);
     }
     return TL_SUCCESS;
 }

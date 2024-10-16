@@ -41,48 +41,26 @@
  * 2024/10/09: Parse single argument with call_parse_arg.
  * 2024/10/12: Fix user function calling bugs. Pass arguments to user defined
  *             functions.
+ * 2024/10/16: Started adding calling back.
  */
 
 #include <call.h>
 
 #define TL_MIN(a, b) ((a) < (b) ? (a) : (b))
 
-int call_exec(TinyLisp *lisp, Call *call, Var *args, size_t argnum,
-              Var *returned) {
-    Var *parsed;
-    Function *function;
-    int rc = 0;
-    size_t i;
-    int found;
-#if TL_DEBUG_CALL
-    fputs("Call \"", stdout);
-    fwrite(call->function.data, 1, call->function.len, stdout);
-    if(argnum) fputs("\" with ", stdout);
-    else fputc('"', stdout);
-    for(i=0;i<argnum;i++){
-        if(args[i].size){
-            switch(args[i].type){
-                case TL_T_STR:
-                    fputc('\"', stdout);
-                    fwrite(args[i].items[0].string.data, 1,
-                           args[i].items[0].string.len, stdout);
-                    fputs("\" ", stdout);
-                    break;
-                case TL_T_NAME:
-                    fwrite(args[i].items[0].string.data, 1,
-                           args[i].items[0].string.len, stdout);
-                    fputc(' ', stdout);
-                    break;
-                case TL_T_NUM:
-                    printf("%f ", args[i].items[0].num);
-                    break;
-                default:
-                    break;
-            }
-        }
+int call_exec(TinyLisp *lisp, Node *node) {
+    int rc;
+    if(node->var->type != TL_T_CALL){
+        return TL_ERR_VALUE_OUTSIDE_OF_CALL;
     }
-    fputc('\n', stdout);
+#if TL_DEBUG_CALL
+    fputs("Calling \"", stdout);
+    fwrite(node->var->items->call.function.data, 1,
+           node->var->items->call.function.len, stdout);
+    fputs("\"\n", stdout);
 #endif
+#if 0
+    /* TODO: Rewrite it */
     if(!lisp->perform_calls){
         if(call->function.len == sizeof("defend")-1){
             if(!memcmp(call->function.data, "defend", sizeof("defend")-1)){
@@ -162,6 +140,8 @@ int call_exec(TinyLisp *lisp, Call *call, Var *args, size_t argnum,
     if(rc) return rc;
     rc = var_copy(returned, &lisp->last);
     return rc;
+#endif
+    return TL_SUCCESS;
 }
 
 Var *call_parse_args(TinyLisp *lisp, Var *args, size_t argnum, int *rc) {
