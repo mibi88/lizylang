@@ -43,6 +43,7 @@
  * 2024/10/09: Error when redefining variables and if the function definition
  *             has no end. Added void list support.
  * 2024/10/13: Added list management functions.
+ * 2024/10/16: Finish generating the tree.
  */
 
 #ifndef DEFS_H
@@ -81,6 +82,7 @@ enum {
     TL_ERR_DIVISION_BY_ZERO,
     TL_ERR_BAD_INPUT,
     TL_ERR_OUT_OF_RANGE,
+    TL_ERR_VALUE_OUTSIDE_OF_CALL,
     TL_RC_AMOUNT
 };
 

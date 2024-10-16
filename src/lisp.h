@@ -43,11 +43,14 @@
  *             adding builtin function definition and calling.
  * 2024/10/12: Call user defined functions with arguments. Return a value from
  *             user functions.
+ * 2024/10/15: Store the tree and start generating it. Store the currently
+ *             executed node.
  */
 
 #ifndef LISP_H
 #define LISP_H
 
+#include <tree.h>
 #include <defs.h>
 #include <var.h>
 
@@ -58,8 +61,7 @@ typedef struct {
     String *var_names;
     size_t var_num;
     struct{
-        size_t i;
-        size_t line;
+        Node *current_node;
         Var *args;
         size_t argnum;
         Var params;
@@ -72,8 +74,9 @@ typedef struct {
     size_t argstack_cur;
     size_t line;
     char perform_calls;
-    size_t i;
     Var last;
+    Node node;
+    void *current_node;
 } TinyLisp;
 
 int tl_init(TinyLisp *lisp, char *buffer, size_t sz);

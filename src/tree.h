@@ -34,37 +34,27 @@
 
 /* CHANGELOG
  *
- * 2024/09/28: Started developement. Added required includes.
- * 2024/09/30: Added debug defines.
- * 2024/10/03: Check for memory leaks.
- * 2024/10/04: Debug function searching.
- * 2024/10/15: Debug the tree generation.
+ * 2024/10/15: Created this file.
  */
 
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#ifndef TREE_H
+#define TREE_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <mcheck.h>
+#include <var.h>
+#include <defs.h>
+#include <platform.h>
 
-/*
- * This header should provide:
- * void *malloc(size_t size);
- * void *realloc(void *ptr, size_t new_size);
- * void free(void *ptr);
- * void *memcpy(void *dest, void *src, size_t size);
- */
+typedef struct {
+    Var *var;
+    void *childs;
+    void *parent;
+    size_t childnum;
+    size_t line;
+    char has_value;
+} Node;
 
-#define TL_DEBUG_CHAR     0
-#define TL_DEBUG_ARGSTACK 0
-#define TL_DEBUG_FSTACK   0
-#define TL_DEBUG_TOKENS   0
-#define TL_DEBUG_CALL     0
-#define TL_DEBUG_VARS     0
-#define TL_DEBUG_TREE     0
-#define TL_LEAK_CHECK     1
+int node_init(Node *node, Var *value);
+int node_add_child(Node *parent, Node *child);
+int node_free_childs(Node *parent, void on_node(Node*, void*), void *data);
 
 #endif

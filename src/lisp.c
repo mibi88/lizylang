@@ -46,12 +46,16 @@
  * 2024/10/12: Call user defined functions with arguments. Return value from
  *             user defined function. Fix leak. Set and delete variables.
  * 2024/10/13: Added list management functions.
+ * 2024/10/14: Moved variable management functions down.
+ * 2024/10/15: Start generating a tree.
+ * 2024/10/16: Add data to the nodes. Finish generating the tree.
  */
 
 #include <lisp.h>
 #include <platform.h>
 #include <call.h>
 #include <builtin.h>
+#include <tree.h>
 
 int tl_init(TinyLisp *lisp, char *buffer, size_t sz) {
     lisp->buffer = buffer;
@@ -63,6 +67,7 @@ int tl_init(TinyLisp *lisp, char *buffer, size_t sz) {
     lisp->fstack_cur = 0;
     lisp->argstack_cur = 0;
     lisp->perform_calls = 1;
+    node_init(&lisp->node, NULL);
 #if TL_LEAK_CHECK
     mtrace();
 #endif
@@ -76,6 +81,306 @@ int tl_init(TinyLisp *lisp, char *buffer, size_t sz) {
                           TL_ERROR(TL_ERR_TOKFULL); \
                           return TL_ERR_TOKFULL; \
                       }
+
+int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
+    char c;
+    char token[TL_TOKEN_SZ];
+    size_t token_cur = 0;
+    char in_string = 0;
+    char escaped = 0;
+    char in_hex = 0;
+    char hexnum;
+    int rc;
+    size_t i;
+    Node *allocated;
+    Node *current = &lisp->node;
+    Var *node_data;
+    const char *messages[TL_RC_AMOUNT] = {
+        "Unknown error!",
+        "Token full!",
+        "Missing function!",
+        "String outside of call!",
+        "Out of memory!",
+        "Mem. copy error!",
+        "FStack overflow!",
+        "Extra parenthesis!",
+        "Argstack overflow!",
+        "Internal error, please report it!",
+        "Unknown type!",
+        "Name not defined!",
+        "Function not defined!",
+        "Too few arguments!",
+        "Too many arguments!",
+        "Bad type!",
+        "Invalid list size!",
+        "Already defined name!",
+        "Function definition not ended!",
+        "Invalid name!",
+        "Stack overflow!",
+        "Division by zero!",
+        "Bad input!",
+        "Index out of range!",
+        "Value outside of call!"
+    };
+    lisp->line = 1;
+    for(i=0;i<lisp->sz;i++){
+        c = lisp->buffer[i];
+#if TL_DEBUG_CHAR
+        printf("%ld%ld, %c\n", lisp->fstack_cur,
+               lisp->fstack[lisp->fstack_cur].argstack_cur, c);
+#endif
+        if(c == '\\' && !escaped){
+            escaped = 1;
+            continue;
+        }
+        if(!escaped){
+            if(c == '"' && !in_string){
+                in_string = 1;
+                continue;
+            }
+            /* Handle arguments and parantheses */
+            if(!in_string){
+                if(c == '(' || c == ')' || c == ' ' || c == '\t' || c == '\n'){
+                    if(token_cur){
+                        /* Update top call */
+                        if(current == &lisp->node){
+                            TL_ERROR(TL_ERR_VALUE_OUTSIDE_OF_CALL);
+                        }
+                        if(current->var->items->call.has_func){
+                            /* Add a node for the value */
+#if TL_DEBUG_TREE
+                            puts(" |_ Argument");
+#endif
+                            allocated = malloc(sizeof(Node));
+                            if(!allocated){
+                                TL_ERROR(TL_ERR_OUT_OF_MEM);
+                            }
+                            node_data = malloc(sizeof(Node));
+                            if(!node_data){
+                                free(allocated);
+                                TL_ERROR(TL_ERR_OUT_OF_MEM);
+                            }
+                            rc = var_auto(node_data, token, token_cur);
+                            if(rc){
+                                TL_ERROR(rc);
+                            }
+                            rc = node_init(allocated, node_data);
+                            if(rc){
+                                free(allocated);
+                                free(node_data);
+                                TL_ERROR(rc);
+                            }
+                            rc = node_add_child(current, allocated);
+                            if(rc){
+                                free(allocated);
+                                free(node_data);
+                                TL_ERROR(rc);
+                            }
+                        }else{
+                            /* Set the function name. */
+#if TL_DEBUG_TREE
+                            puts(" |_ Function name");
+#endif
+                            var_free_str(&current->var->items->call.function);
+                            var_raw_str(&current->var->items->call.function,
+                                        token, token_cur);
+                            current->var->items->call.has_func = 1;
+                        }
+                        token_cur = 0;
+                    }
+                }else{
+                    TL_TOK_ADD(c)
+                }
+                if(c == '('){
+                    /* Create new call. */
+                    allocated = malloc(sizeof(Node));
+                    if(!allocated){
+                        TL_ERROR(TL_ERR_OUT_OF_MEM);
+                    }
+                    node_data = malloc(sizeof(Node));
+                    if(!node_data){
+                        free(allocated);
+                        TL_ERROR(TL_ERR_OUT_OF_MEM);
+                    }
+                    rc = var_call(node_data, "", 0);
+                    if(rc){
+                        TL_ERROR(rc);
+                    }
+                    rc = node_init(allocated, node_data);
+                    if(rc){
+                        free(allocated);
+                        free(node_data);
+                        TL_ERROR(rc);
+                    }
+                    rc = node_add_child(current, allocated);
+                    if(rc){
+                        free(allocated);
+                        free(node_data);
+                        TL_ERROR(rc);
+                    }
+                    current = allocated;
+                    token_cur = 0;
+#if TL_DEBUG_TREE
+                    puts("-> New node");
+#endif
+                }else if(c == ')'){
+                    /* Check if the call has a function name. */
+                    /* Add call to the parent call, or to the list if it has no
+                     * parent */
+                    if(current == &lisp->node){
+                        TL_ERROR(TL_ERR_END_PARANTHESIS);
+                    }
+                    current = current->parent;
+#if TL_DEBUG_TREE
+                    if(current == &lisp->node){
+                        puts("<- Go to the root node");
+                    }else{
+                        puts("<- Go to the parent node");
+                    }
+#endif
+                }
+            }else{
+                if(c == '"'){
+                    /* Check if the string is in a call. If it is, add it to
+                     * the current call. */
+#if TL_DEBUG_TREE
+                    puts(" |_ String argument");
+#endif
+                    if(current == &lisp->node){
+                        TL_ERROR(TL_ERR_STR_OUT_OF_CALL);
+                    }
+                    /* Add a node for the value */
+                    allocated = malloc(sizeof(Node));
+                    if(!allocated){
+                        TL_ERROR(TL_ERR_OUT_OF_MEM);
+                    }
+                    node_data = malloc(sizeof(Node));
+                    if(!node_data){
+                        free(allocated);
+                        TL_ERROR(TL_ERR_OUT_OF_MEM);
+                    }
+                    rc = var_str(node_data, token, token_cur);
+                    if(rc){
+                        TL_ERROR(rc);
+                    }
+                    rc = node_init(allocated, node_data);
+                    if(rc){
+                        free(allocated);
+                        free(node_data);
+                        TL_ERROR(rc);
+                    }
+                    rc = node_add_child(current, allocated);
+                    if(rc){
+                        free(allocated);
+                        free(node_data);
+                        TL_ERROR(rc);
+                    }
+                    token_cur = 0;
+                    in_string = 0;
+                    in_hex = 0;
+                    continue;
+                }
+            }
+        }
+        if(in_string){
+            if(in_hex < 3 && in_hex > 0){
+                if(c >= '0' && c <= '9'){
+                    hexnum += (c-'0')<<(4*(1-(in_hex-1)));
+                }else if(c >= 'A' && c <= 'F'){
+                    hexnum += (c-'A'+10)<<(4*(1-(in_hex-1)));
+                }else if(c >= 'a' && c <= 'f'){
+                    hexnum += (c-'a'+10)<<(4*(1-(in_hex-1)));
+                }
+                in_hex++;
+                if(in_hex > 2){
+                    TL_TOK_ADD(hexnum);
+                    in_hex = 0;
+                }
+            }else if(escaped){
+                /* Handle escape sequences */
+                in_hex = 0;
+                switch(c){
+                    case '"':
+                        /* FALLTHRU */
+                    case '\\':
+                        TL_TOK_ADD(c);
+                        break;
+                    case 'n':
+                        TL_TOK_ADD('\n');
+                        break;
+                    case 'r':
+                        TL_TOK_ADD('\r');
+                        break;
+                    case 'a':
+                        TL_TOK_ADD('\a');
+                        break;
+                    case 'x':
+                        in_hex = 1;
+                        hexnum = 0;
+                        break;
+                    default:
+                        TL_TOK_ADD('\\');
+                        TL_TOK_ADD(c);
+                }
+            }else{
+                TL_TOK_ADD(c);
+            }
+        }
+        if(c == '\n'){
+            lisp->line++;
+        }
+        escaped = 0;
+    }
+    for(i=0;i<lisp->node.childnum;i++){
+        /*if(((Node**)lisp->node.childs)[i]->var->type != TL_T_CALL){
+            TL_ERROR(TL_ERR_VALUE_OUTSIDE_OF_CALL);
+        }
+        fwrite(((Node**)lisp->node.childs)[i]->var->items->call.function.data,
+               1,
+               ((Node**)lisp->node.childs)[i]->var->items->call.function.len,
+               stdout);
+        fputc('\n', stdout);*/
+    }
+    return TL_SUCCESS;
+}
+
+#undef TL_TOK_ADD
+#undef TL_ERROR
+
+void lisp_free_nodes(Node *node, void *_lisp) {
+    TinyLisp *lisp = _lisp;
+    free(node->var);
+    node->var = NULL;
+    if(node != &lisp->node) free(node);
+}
+
+int tl_free(TinyLisp *lisp) {
+    size_t i, n;
+    int out = TL_SUCCESS;
+    node_free_childs(&lisp->node, lisp_free_nodes, lisp);
+    for(i=0;i<lisp->var_num;i++){
+        var_free(lisp->vars+i);
+        var_free_str(lisp->var_names+i);
+    }
+    for(i=0;i<lisp->stack_cur;i++){
+        if(lisp->stack[i].argnum){
+            if(lisp->stack[i].args){
+                for(n=0;n<lisp->stack[i].argnum;n++){
+                    var_free(lisp->stack[i].args+n);
+                }
+                free(lisp->stack[i].args);
+            }
+        }
+        var_free(&lisp->stack[i].params);
+    }
+    free(lisp->vars);
+    free(lisp->var_names);
+    var_free(&lisp->last);
+#if TL_LEAK_CHECK
+    muntrace();
+#endif
+    return out;
+}
 
 int tl_add_var(TinyLisp *lisp, Var *var, String *name) {
     Var *var_ptr;
@@ -180,316 +485,4 @@ int tl_del_var(TinyLisp *lisp, String *name) {
         return TL_ERR_NOT_DEF;
     }
     return TL_SUCCESS;
-}
-
-int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
-    size_t n;
-    char c;
-    char token[TL_TOKEN_SZ];
-    size_t token_cur = 0;
-    char in_string = 0;
-    char escaped = 0;
-    char in_hex = 0;
-    char hexnum;
-    int rc;
-    Var *argstart;
-    Var returned;
-    size_t *fncinfo;
-    size_t argnum;
-    const char *messages[TL_RC_AMOUNT] = {
-        "Unknown error!",
-        "Token full!",
-        "Missing function!",
-        "String outside of call!",
-        "Out of memory!",
-        "Mem. copy error!",
-        "FStack overflow!",
-        "Extra parenthesis!",
-        "Argstack overflow!",
-        "Internal error, please report it!",
-        "Unknown type!",
-        "Name not defined!",
-        "Function not defined!",
-        "Too few arguments!",
-        "Too many arguments!",
-        "Bad type!",
-        "Invalid list size!",
-        "Already defined name!",
-        "Function definition not ended!",
-        "Invalid name!",
-        "Stack overflow!",
-        "Division by zero!",
-        "Bad input!",
-        "Index out of range!"
-    };
-    lisp->line = 1;
-    for(lisp->i=0;lisp->i<lisp->sz;lisp->i++){
-        c = lisp->buffer[lisp->i];
-#if TL_DEBUG_CHAR
-        printf("%ld%ld, %c\n", lisp->fstack_cur,
-               lisp->fstack[lisp->fstack_cur].argstack_cur, c);
-#endif
-        if(c == '\\' && !escaped){
-            escaped = 1;
-            continue;
-        }
-        if(!escaped){
-            if(c == '"' && !in_string){
-                in_string = 1;
-                continue;
-            }
-            /* Handle arguments and parantheses */
-            if(!in_string){
-                if(c == '(' || c == ')' || c == ' ' || c == '\t' || c == '\n'){
-                    if(token_cur){
-                        /* Push arg or function name to stack */
-#if TL_DEBUG_TOKENS
-                        fwrite(token, 1, token_cur, stdout);
-                        fputc('\n', stdout);
-#endif
-                        if(lisp->fstack[lisp->fstack_cur].has_func){
-                            /* It is an argument */
-                            var_auto(lisp->argstack+lisp->argstack_cur, token,
-                                    token_cur);
-                            lisp->argstack_fnc[lisp->argstack_cur] =
-                                                            lisp->fstack_cur;
-                            lisp->argstack_cur++;
-                            if(lisp->argstack_cur >= TL_ARGSTACK_SZ){
-                                var_free_call(lisp->fstack+lisp->fstack_cur);
-                                TL_ERROR(TL_ERR_ARGSTACK_OVERFLOW);
-                            }
-                        }else{
-                            /* It is a function name */
-                            if((rc = var_call(lisp->fstack+lisp->fstack_cur,
-                                              token, token_cur))){
-                                TL_ERROR(rc);
-                            }
-                            lisp->fstack[lisp->fstack_cur].has_func = 1;
-                        }
-                        token_cur = 0;
-                    }
-                }else{
-                    TL_TOK_ADD(c)
-                }
-                if(c == '('){
-                    lisp->fstack_cur++;
-                    if(lisp->fstack_cur >= TL_FSTACK_SZ){
-                        var_free_call(lisp->fstack+lisp->fstack_cur);
-                        TL_ERROR(TL_ERR_FSTACK_OVERFLOW);
-                    }
-                    lisp->fstack[lisp->fstack_cur].function.data = NULL;
-                    lisp->fstack[lisp->fstack_cur].function.len = 0;
-                    lisp->fstack[lisp->fstack_cur].has_func = 0;
-                    lisp->fstack[lisp->fstack_cur].argstack_cur =
-                                                            lisp->argstack_cur;
-                    token_cur = 0;
-                }else if(c == ')'){
-                    if(!lisp->fstack[lisp->fstack_cur].has_func){
-                        TL_ERROR(TL_ERR_NOFUNC);
-                    }
-                    /* Run the function */
-                    if(lisp->argstack_cur <
-                       lisp->fstack[lisp->fstack_cur].argstack_cur){
-                        TL_ERROR(TL_ERR_INTERNAL);
-                    }
-                    argnum = lisp->argstack_cur-
-                                lisp->fstack[lisp->fstack_cur].argstack_cur;
-                    argstart = lisp->argstack+lisp->argstack_cur-argnum;
-                    fncinfo = lisp->argstack_fnc+lisp->argstack_cur-argnum;
-#if TL_DEBUG_FSTACK
-                    printf("fstack (%ld): ", lisp->fstack_cur);
-                    for(n=1;n<lisp->fstack_cur+1;n++){
-                        fputc('\"', stdout);
-                        fwrite(lisp->fstack[n].function.data, 1,
-                               lisp->fstack[n].function.len, stdout);
-                        fputs("\" ", stdout);
-                    }
-                    fputc('\n', stdout);
-#endif
-#if TL_DEBUG_ARGSTACK
-                    printf("argstack (%ld-%ld): ", lisp->argstack_cur, argnum);
-                    for(n=0;n<lisp->argstack_cur;n++){
-                        if(lisp->argstack[n].items){
-                            if(lisp->argstack[n].type == TL_T_NUM){
-                                printf("%f ", lisp->argstack[n].items->num);
-                            }else{
-                                fputc('\"', stdout);
-                                fwrite(lisp->argstack[n].items[0].string.data,
-                                       1,
-                                       lisp->argstack[n].items[0].string.len,
-                                       stdout);
-                                fputs("\" ", stdout);
-                            }
-                        }else{
-                            fputs("(null) ", stdout);
-                        }
-                    }
-                    fputc('\n', stdout);
-#endif
-                    for(n=0;n<argnum;n++){
-                        if(fncinfo[n] != lisp->fstack_cur){
-                            TL_ERROR(TL_ERR_INTERNAL);
-                        }
-                    }
-                    if((rc = call_exec(lisp, lisp->fstack+lisp->fstack_cur,
-                                       argstart, argnum, &returned))){
-                        var_free_call(lisp->fstack+lisp->fstack_cur);
-                        TL_ERROR(rc);
-                    }
-                    for(n=0;n<argnum;n++){
-                        if((rc =
-                            var_free(lisp->argstack+lisp->argstack_cur-n-1))){
-                            TL_ERROR(rc);
-                        }
-                    }
-                    lisp->argstack_cur -= argnum;
-                    /* Push return value on argstack */
-                    if(lisp->fstack_cur > 1){
-                        lisp->argstack[lisp->argstack_cur] = returned;
-                        lisp->argstack_fnc[lisp->argstack_cur] =
-                                                            lisp->fstack_cur-1;
-                        lisp->argstack_cur++;
-                        if(lisp->argstack_cur >= TL_ARGSTACK_SZ){
-                            var_free_call(lisp->fstack+lisp->fstack_cur);
-                            TL_ERROR(TL_ERR_ARGSTACK_OVERFLOW);
-                        }
-                    }else{
-                        if((rc = var_free(&returned))){
-                            var_free_call(lisp->fstack+lisp->fstack_cur);
-                            TL_ERROR(rc);
-                        }
-                    }
-                    /* Free the call data */
-                    lisp->fstack[lisp->fstack_cur].has_func = 0;
-                    if(lisp->fstack_cur <= 0){
-                        TL_ERROR(TL_ERR_END_PARANTHESIS);
-                    }
-                    var_free_call(lisp->fstack+lisp->fstack_cur);
-                    lisp->fstack_cur--;
-                }
-            }else{
-                if(c == '"'){
-                    if(lisp->fstack_cur > 0){
-                        if(lisp->fstack[lisp->fstack_cur].has_func){
-                            /* Push arg to stack */
-#if TL_DEBUG_TOKENS
-                            fwrite(token, 1, token_cur, stdout);
-                            fputc('\n', stdout);
-#endif
-                            var_str(lisp->argstack+lisp->argstack_cur, token,
-                                    token_cur);
-                            lisp->argstack_fnc[lisp->argstack_cur] =
-                                                            lisp->fstack_cur;
-                            lisp->argstack_cur++;
-                            if(lisp->argstack_cur >= TL_ARGSTACK_SZ){
-                                var_free_call(lisp->fstack+lisp->fstack_cur);
-                                TL_ERROR(TL_ERR_ARGSTACK_OVERFLOW);
-                            }
-                        }else{
-                            TL_ERROR(TL_ERR_NOFUNC);
-                        }
-                    }else{
-                        TL_ERROR(TL_ERR_STR_OUT_OF_CALL);
-                    }
-                    token_cur = 0;
-                    in_string = 0;
-                    in_hex = 0;
-                    continue;
-                }
-            }
-        }
-        if(in_string){
-            if(in_hex < 3 && in_hex > 0){
-                if(c >= '0' && c <= '9'){
-                    hexnum += (c-'0')<<(4*(1-(in_hex-1)));
-                }else if(c >= 'A' && c <= 'F'){
-                    hexnum += (c-'A'+10)<<(4*(1-(in_hex-1)));
-                }else if(c >= 'a' && c <= 'f'){
-                    hexnum += (c-'a'+10)<<(4*(1-(in_hex-1)));
-                }
-                in_hex++;
-                if(in_hex > 2){
-                    TL_TOK_ADD(hexnum);
-                    in_hex = 0;
-                }
-            }else if(escaped){
-                /* Handle escape sequences */
-                in_hex = 0;
-                switch(c){
-                    case '"':
-                        /* FALLTHRU */
-                    case '\\':
-                        TL_TOK_ADD(c);
-                        break;
-                    case 'n':
-                        TL_TOK_ADD('\n');
-                        break;
-                    case 'r':
-                        TL_TOK_ADD('\r');
-                        break;
-                    case 'a':
-                        TL_TOK_ADD('\a');
-                        break;
-                    case 'x':
-                        in_hex = 1;
-                        hexnum = 0;
-                        break;
-                    default:
-                        TL_TOK_ADD('\\');
-                        TL_TOK_ADD(c);
-                }
-            }else{
-                TL_TOK_ADD(c);
-            }
-        }
-        if(c == '\n'){
-            lisp->line++;
-        }
-        escaped = 0;
-    }
-    if(!lisp->perform_calls){
-        TL_ERROR(TL_ERR_FNCDEF_NO_END);
-    }
-    return TL_SUCCESS;
-}
-
-#undef TL_TOK_ADD
-#undef TL_ERROR
-
-int tl_free(TinyLisp *lisp) {
-    size_t i, n;
-    int rc;
-    int out = TL_SUCCESS;
-    for(i=0;i<lisp->var_num;i++){
-        var_free(lisp->vars+i);
-        var_free_str(lisp->var_names+i);
-    }
-    for(i=0;i<lisp->argstack_cur;i++){
-        if((rc = var_free(lisp->argstack+i))){
-            out = rc;
-        }
-    }
-    for(i=0;i<lisp->fstack_cur;i++){
-        if((rc = var_free_call(lisp->fstack+i))){
-            out = rc;
-        }
-    }
-    for(i=0;i<lisp->stack_cur;i++){
-        if(lisp->stack[i].argnum){
-            if(lisp->stack[i].args){
-                for(n=0;n<lisp->stack[i].argnum;n++){
-                    var_free(lisp->stack[i].args+n);
-                }
-                free(lisp->stack[i].args);
-            }
-        }
-        var_free(&lisp->stack[i].params);
-    }
-    free(lisp->vars);
-    free(lisp->var_names);
-    var_free(&lisp->last);
-#if TL_LEAK_CHECK
-    muntrace();
-#endif
-    return out;
 }

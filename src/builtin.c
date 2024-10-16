@@ -443,9 +443,7 @@ int builtin_fncdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
     if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
-    if(lisp->i+1 >= lisp->sz) return TL_ERR_FNCDEF_NO_END;
-    if(lisp->buffer[lisp->i+1] == '\n') lisp->line++;
-    rc = var_user_func(&function, lisp->i+1, lisp->line, args+1);
+    rc = var_user_func(&function, lisp->current_node, args+1);
     /*printf("%d\n", lisp->buffer[lisp->i+2]);*/
     if(rc) return rc;
     rc = var_raw_str(&name, VAR_STR_DATA(VAR_GET_ITEM(args, 0)),
@@ -477,8 +475,7 @@ int builtin_defend(void *_lisp, void *_args, void *_parsed, size_t argnum,
     lisp->perform_calls = 1;
     if(lisp->stack_cur){
         lisp->stack_cur--;
-        lisp->i = lisp->stack[lisp->stack_cur].i;
-        lisp->line = lisp->stack[lisp->stack_cur].line;
+        lisp->current_node = lisp->stack[lisp->stack_cur].current_node;
         for(n=0;n<lisp->stack[lisp->stack_cur].argnum;n++){
             var_free(lisp->stack[lisp->stack_cur].args+n);
         }
@@ -830,7 +827,7 @@ int builtin_callif(void *_lisp, void *_args, void *_parsed, size_t argnum,
     Var *args = _args;
     int rc;
     Var condition;
-    Call call;
+    Var call;
     TL_UNUSED(_parsed);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -847,8 +844,8 @@ int builtin_callif(void *_lisp, void *_args, void *_parsed, size_t argnum,
         rc = var_call(&call, args[1].items->string.data,
                       args[1].items->string.len);
         if(rc) return rc;
-        rc = call_exec(lisp, &call, args+2, argnum-2, _returned);
-        var_free_call(&call);
+        rc = call_exec(lisp, &call.items->call, args+2, argnum-2, _returned);
+        var_free(&call);
         if(rc) return rc;
     }else{
         var_free(&condition);

@@ -34,37 +34,48 @@
 
 /* CHANGELOG
  *
- * 2024/09/28: Started developement. Added required includes.
- * 2024/09/30: Added debug defines.
- * 2024/10/03: Check for memory leaks.
- * 2024/10/04: Debug function searching.
- * 2024/10/15: Debug the tree generation.
+ * 2024/10/15: Created this file.
  */
 
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#include <tree.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <mcheck.h>
+int node_init(Node *node, Var *value) {
+    node->has_value = 0;
+    node->var = value;
+    node->childs = NULL;
+    node->childnum = 0;
+    return TL_SUCCESS;
+}
 
-/*
- * This header should provide:
- * void *malloc(size_t size);
- * void *realloc(void *ptr, size_t new_size);
- * void free(void *ptr);
- * void *memcpy(void *dest, void *src, size_t size);
- */
+int node_set_value(Node *node, Var *value) {
+    node->var = value;
+    return TL_SUCCESS;
+}
 
-#define TL_DEBUG_CHAR     0
-#define TL_DEBUG_ARGSTACK 0
-#define TL_DEBUG_FSTACK   0
-#define TL_DEBUG_TOKENS   0
-#define TL_DEBUG_CALL     0
-#define TL_DEBUG_VARS     0
-#define TL_DEBUG_TREE     0
-#define TL_LEAK_CHECK     1
+int node_add_child(Node *parent, Node *child) {
+    Node **childs;
+    void *tmp;
+    tmp = realloc(parent->childs, (parent->childnum+1)*sizeof(Node*));
+    if(!tmp){
+        return TL_ERR_OUT_OF_MEM;
+    }
+    parent->childs = tmp;
+    childs = parent->childs;
+    childs[parent->childnum] = child;
+    childs[parent->childnum]->parent = parent;
+    parent->childnum++;
+    return TL_SUCCESS;
+}
 
-#endif
+int node_free_childs(Node *parent, void on_node(Node*, void*), void *data) {
+    /* TODO: Avoid recursion. */
+    size_t i;
+    for(i=0;i<parent->childnum;i++){
+        node_free_childs(((Node**)parent->childs)[i], on_node, data);
+    }
+    free(parent->childs);
+    parent->childs = NULL;
+    if(parent->var) var_free(parent->var);
+    on_node(parent, data);
+    return TL_SUCCESS;
+}

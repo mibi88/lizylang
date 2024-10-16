@@ -41,6 +41,8 @@
  * 2024/10/07: Added return value for functions, string concatenation, creation
  *             of numbers from float and adding data to a string.
  * 2024/10/08: Append to list.
+ * 2024/10/15: Store the user function node. Handle calls in var_copy.
+ *             var_call: initialize a Var.
  */
 
 #include <var.h>
@@ -140,7 +142,7 @@ int var_builtin_func(Var *var, int f(void*, void*, void*, size_t, void*),
     return TL_SUCCESS;
 }
 
-int var_user_func(Var *var, size_t i, size_t line, Var *params) {
+int var_user_func(Var *var, void *start, Var *params) {
     int rc;
     var->type = TL_T_FUNC;
     var->items = malloc(sizeof(Item));
@@ -149,8 +151,7 @@ int var_user_func(Var *var, size_t i, size_t line, Var *params) {
     }
     var->size = 1;
     var->null = 0;
-    var->items->function.ptr.start.i = i;
-    var->items->function.ptr.start.line = line;
+    var->items->function.ptr.start = start;
     var->items->function.builtin = 0;
     var->items->function.parseargs = 1;
     var->items->function.params = malloc(sizeof(Var));
@@ -314,28 +315,41 @@ int var_copy(Var *src, Var *dest) {
                 dest->items[i].function = src->items[i].function;
             }
             break;
+        case TL_T_CALL:
+            dest->type = TL_T_CALL;
+            dest->items = malloc(src->size*sizeof(Item));
+            if(!dest->items){
+                return TL_ERR_OUT_OF_MEM;
+            }
+            dest->size = src->size;
+            dest->null = 0;
+            for(i=0;i<src->size;i++){
+                dest->items[i].call = src->items[i].call;
+            }
+            break;
         default:
             return TL_ERR_BAD_TYPE;
     }
     return TL_SUCCESS;
 }
 
-int var_call(Call *call, char *name, size_t len) {
-    call->function.data = malloc(len);
-    if(!call->function.data){
+int var_call(Var *var, char *name, size_t len) {
+    var->type = TL_T_CALL;
+    var->items = malloc(sizeof(Item));
+    if(!var->items){
         return TL_ERR_OUT_OF_MEM;
     }
-    call->function.len = len;
-    if(!memcpy(call->function.data, name, len)){
+    var->size = 1;
+    var->null = 0;
+    var->items->call.function.data = malloc(len);
+    if(!var->items->call.function.data){
+        return TL_ERR_OUT_OF_MEM;
+    }
+    var->items->call.function.len = len;
+    if(!memcpy(var->items->call.function.data, name, len)){
         return TL_ERR_CPY;
     }
-    return TL_SUCCESS;
-}
-
-int var_free_call(Call *call) {
-    free(call->function.data);
-    call->function.data = NULL;
-    call->function.len = 0;
+    var->items->call.has_func = 0;
     return TL_SUCCESS;
 }
 
@@ -367,6 +381,11 @@ int var_free(Var *var) {
                     var->items[i].function.params = NULL;
                 }
             }
+            break;
+        case TL_T_CALL:
+            free(var->items->call.function.data);
+            var->items->call.function.data = NULL;
+            var->items->call.function.len = 0;
             break;
         default:
             return TL_ERR_UNKNOWN_TYPE;

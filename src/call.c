@@ -146,8 +146,7 @@ int call_exec(TinyLisp *lisp, Call *call, Var *args, size_t argnum,
             parsed = call_parse_args(lisp, args, argnum, &rc);
             if(rc) return rc;
         }
-        lisp->stack[lisp->stack_cur].i = lisp->i;
-        lisp->stack[lisp->stack_cur].line = lisp->line;
+        lisp->stack[lisp->stack_cur].current_node = lisp->current_node;
         lisp->stack[lisp->stack_cur].args = parsed;
         lisp->stack[lisp->stack_cur].argnum = argnum;
         rc = var_copy(function->params, &lisp->stack[lisp->stack_cur].params);
@@ -156,8 +155,7 @@ int call_exec(TinyLisp *lisp, Call *call, Var *args, size_t argnum,
         if(lisp->stack_cur >= TL_STACK_SZ){
             return TL_ERR_STACK_OVERFLOW;
         }
-        lisp->i = function->ptr.start.i;
-        lisp->line = function->ptr.start.line;
+        lisp->current_node = function->ptr.start;
         var_num_from_float(returned, 0);
     }
     rc = var_free(&lisp->last);

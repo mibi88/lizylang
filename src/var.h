@@ -41,6 +41,9 @@
  * 2024/10/03: Fixed memory leaks.
  * 2024/10/07: Return value of functions.
  * 2024/10/08: Add macros to handle lists, starting to add list support.
+ * 2024/10/14: A call is now a variable type.
+ * 2024/10/15: Adapt some structs to the tree. Define TL_T_CALL.
+ * 2024/10/16: Removed useless values in structs.
  */
 
 #ifndef VAR_H
@@ -62,7 +65,8 @@ enum {
     TL_T_FUNC,
     TL_T_STR,
     TL_T_NUM,
-    TL_T_NAME
+    TL_T_NAME,
+    TL_T_CALL
 };
 
 typedef struct {
@@ -72,10 +76,7 @@ typedef struct {
 
 typedef struct {
     union {
-        struct{
-            size_t i;
-            size_t line;
-        } start;
+        void *start;
         int (*f)(void *lisp, void* args, void* parsed, size_t argnum,
                  void* returned);
     } ptr;
@@ -84,10 +85,16 @@ typedef struct {
     void *params;
 } Function;
 
+typedef struct {
+    String function;
+    char has_func;
+} Call;
+
 typedef union {
     float num;
     String string;
     Function function;
+    Call call;
 } Item;
 
 typedef struct {
@@ -97,12 +104,6 @@ typedef struct {
     char null;
 } Var;
 
-typedef struct {
-    String function;
-    char has_func;
-    size_t argstack_cur;
-} Call;
-
 int var_auto(Var *var, char *data, size_t len);
 int var_str(Var *var, char *data, size_t len);
 int var_str_concat(Var *var, Var *str1, Var *str2);
@@ -110,13 +111,13 @@ int var_str_add(Var *var, char *data, size_t len);
 int var_raw_str(String *string, char *data, size_t len);
 int var_builtin_func(Var *var, int f(void*, void*, void*, size_t, void*),
                      char parse);
-int var_user_func(Var *var, size_t i, size_t line, Var *params);
+int var_user_func(Var *var, void *start, Var *params);
 char var_isnum(char *data, size_t len);
 int var_num(Var *var, char *data, size_t len);
 int var_num_from_float(Var *var, float num);
 char var_isname(char *data, size_t len);
 int var_copy(Var *src, Var *dest);
-int var_call(Call *call, char *name, size_t len);
+int var_call(Var *var, char *name, size_t len);
 
 int var_free_call(Call *call);
 int var_free_str(String *string);
