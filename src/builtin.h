@@ -37,6 +37,7 @@
  * 2024/10/03: Created file.
  * 2024/10/04: Adding some functions.
  * 2024/10/09: Started adding function definition.
+ * 2024/10/18: Fixed the prototypes.
  */
 
 #ifndef BUILTIN_H
@@ -45,71 +46,43 @@
 #include <call.h>
 
 int builtin_register_funcs(TinyLisp *lisp);
-int builtin_comment(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                    void *_returned);
-int builtin_strdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_numdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_set(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned);
-int builtin_del(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned);
-int builtin_print(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned);
-int builtin_printraw(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_comment(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_strdef(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_numdef(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_set(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_del(void *_lisp, void *_node, size_t argnum,  void *_returned);
+int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_printraw(void *_lisp, void *_node, size_t argnum,
                      void *_returned);
-int builtin_input(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned);
-int builtin_add(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned);
-int builtin_merge(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned);
-int builtin_params(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_list(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                 void *_returned);
-int builtin_fncdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_defend(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_if(void *_lisp, void *_args, void *_parsed, size_t argnum,
-               void *_returned);
-int builtin_smaller(void *_lisp, void *_args, void *_parsed, size_t argnum,
-               void *_returned);
-int builtin_bigger(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_smaller_or_equal(void *_lisp, void *_args, void *_parsed,
-                             size_t argnum, void *_returned);
-int builtin_bigger_or_equal(void *_lisp, void *_args, void *_parsed,
-                            size_t argnum, void *_returned);
-int builtin_equal(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned);
-int builtin_not_equal(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_input(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_add(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_merge(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_params(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_list(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_fncdef(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_defend(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_if(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_smaller(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_bigger(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_smaller_or_equal(void *_lisp, void *_node, size_t argnum,
+                             void *_returned);
+int builtin_bigger_or_equal(void *_lisp, void *_node, size_t argnum,
+                            void *_returned);
+int builtin_equal(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_not_equal(void *_lisp, void *_node, size_t argnum,
                       void *_returned);
-int builtin_substract(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_substract(void *_lisp, void *_node, size_t argnum,
                       void *_returned);
-int builtin_multiply(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                     void *_returned);
-int builtin_divide(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_modulo(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_floor(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned);
-int builtin_ceil(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                 void *_returned);
-int builtin_parsenum(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                     void *_returned);
-int builtin_callif(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_len(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned);
-int builtin_strlen(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
-int builtin_get(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned);
-int builtin_strget(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned);
+int builtin_multiply(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_divide(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_modulo(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_floor(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_ceil(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_parsenum(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_callif(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_len(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_strlen(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_get(void *_lisp, void *_node, size_t argnum, void *_returned);
+int builtin_strget(void *_lisp, void *_node, size_t argnum, void *_returned);
 
 #endif

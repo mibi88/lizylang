@@ -44,6 +44,7 @@
  *             arguments. Return value from function. Added conditions.
  * 2024/10/13: Added list management functions.
  * 2024/10/16: Started adding calling back.
+ * 2024/10/18: Update the prototypes.
  */
 
 #include <builtin.h>
@@ -100,12 +101,10 @@ int builtin_register_funcs(TinyLisp *lisp) {
     return TL_SUCCESS;
 }
 
-int builtin_comment(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                    void *_returned) {
+int builtin_comment(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     TL_UNUSED(argnum);
     TL_UNUSED(_returned);
     rc = var_str(_returned, "", 0);
@@ -113,14 +112,13 @@ int builtin_comment(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_strdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
+int builtin_strdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
-    Var *args = _args;
+    Var *args = NULL; /* TODO: Fix required! */
     Var value;
     String name;
     int rc;
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
@@ -150,14 +148,13 @@ int builtin_strdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_numdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
+int builtin_numdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
-    Var *args = _args;
+    Var *args = NULL; /* TODO: Fix required! */
     Var value;
     String name;
     int rc;
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
@@ -187,13 +184,12 @@ int builtin_numdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_set(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned) {
+int builtin_set(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
-    Var *args = _args;
+    Var *args = NULL; /* TODO: Fix required! */
     Var value;
     int rc;
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
@@ -211,12 +207,11 @@ int builtin_set(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_del(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned) {
+int builtin_del(void *_lisp, void *_node, size_t argnum,  void *_returned) {
     TinyLisp *lisp = _lisp;
-    Var *args = _args;
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
@@ -229,13 +224,11 @@ int builtin_del(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_print(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned) {
+int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
     size_t i;
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) < 1){
@@ -268,13 +261,13 @@ int builtin_print(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_printraw(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_printraw(void *_lisp, void *_node, size_t argnum,
                      void *_returned) {
     int rc;
     size_t i;
-    Var *args = _args;
+    Var *args = NULL; /* TODO: Fix required! */
     TL_UNUSED(_lisp);
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) < 1){
@@ -314,13 +307,11 @@ int builtin_printraw(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_input(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned) {
+int builtin_input(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
     char c;
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     else if(args[0].type != TL_T_STR) return TL_ERR_BAD_TYPE;
@@ -338,12 +329,10 @@ int builtin_input(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_add(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned) {
+int builtin_add(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     else if(args[0].type != args[1].type) return TL_ERR_BAD_TYPE;
@@ -365,12 +354,10 @@ int builtin_add(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_merge(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned) {
+int builtin_merge(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     rc = var_copy(args, _returned);
@@ -380,13 +367,12 @@ int builtin_merge(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_params(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
+int builtin_params(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
-    Var *args = _args;
+    Var *args = NULL; /* TODO: Fix required! */
     size_t i;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(!argnum){
         ((Var*)_returned)->null = 0;
         ((Var*)_returned)->size = 0;
@@ -406,14 +392,12 @@ int builtin_params(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_list(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                 void *_returned) {
+int builtin_list(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     size_t i;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(!argnum){
         ((Var*)_returned)->null = 0;
         ((Var*)_returned)->size = 0;
@@ -433,14 +417,13 @@ int builtin_list(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_fncdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
+int builtin_fncdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
     int rc;
-    Var *args = _args;
+    Var *args = NULL; /* TODO: Fix required! */
     Var function;
     String name;
-    TL_UNUSED(_parsed);
+    TL_UNUSED(_node);
     if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
@@ -465,13 +448,11 @@ int builtin_fncdef(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_defend(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
+int builtin_defend(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
     size_t n;
     int rc;
-    TL_UNUSED(_parsed);
-    TL_UNUSED(_args);
+    TL_UNUSED(_node);
     if(argnum > 0) return TL_ERR_TOO_MANY_ARGS;
     lisp->perform_calls = 1;
     if(lisp->stack_cur){
@@ -499,12 +480,10 @@ int builtin_defend(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_if(void *_lisp, void *_args, void *_parsed, size_t argnum,
-               void *_returned) {
-    Var *args = _parsed;
+int builtin_if(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 3) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 3) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1){
@@ -519,12 +498,10 @@ int builtin_if(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_smaller(void *_lisp, void *_args, void *_parsed, size_t argnum,
-               void *_returned) {
-    Var *args = _parsed;
+int builtin_smaller(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -541,12 +518,10 @@ int builtin_smaller(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_bigger(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
-    Var *args = _parsed;
+int builtin_bigger(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -563,12 +538,11 @@ int builtin_bigger(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_smaller_or_equal(void *_lisp, void *_args, void *_parsed,
-                             size_t argnum, void *_returned) {
-    Var *args = _parsed;
+int builtin_smaller_or_equal(void *_lisp, void *_node, size_t argnum,
+                             void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -585,12 +559,11 @@ int builtin_smaller_or_equal(void *_lisp, void *_args, void *_parsed,
     return rc;
 }
 
-int builtin_bigger_or_equal(void *_lisp, void *_args, void *_parsed,
-                            size_t argnum, void *_returned) {
-    Var *args = _parsed;
+int builtin_bigger_or_equal(void *_lisp, void *_node, size_t argnum,
+                            void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -607,12 +580,10 @@ int builtin_bigger_or_equal(void *_lisp, void *_args, void *_parsed,
     return rc;
 }
 
-int builtin_equal(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned) {
-    Var *args = _parsed;
+int builtin_equal(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -646,12 +617,11 @@ int builtin_equal(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_not_equal(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_not_equal(void *_lisp, void *_node, size_t argnum,
                       void *_returned) {
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -685,12 +655,11 @@ int builtin_not_equal(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_substract(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_substract(void *_lisp, void *_node, size_t argnum,
                       void *_returned) {
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -703,12 +672,11 @@ int builtin_substract(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_multiply(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_multiply(void *_lisp, void *_node, size_t argnum,
                      void *_returned) {
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -721,12 +689,10 @@ int builtin_multiply(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_divide(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
-    Var *args = _parsed;
+int builtin_divide(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -742,12 +708,10 @@ int builtin_divide(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_modulo(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
-    Var *args = _parsed;
+int builtin_modulo(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
@@ -764,12 +728,10 @@ int builtin_modulo(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_floor(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                  void *_returned) {
-    Var *args = _parsed;
+int builtin_floor(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1){
@@ -782,12 +744,10 @@ int builtin_floor(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_ceil(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                 void *_returned) {
-    Var *args = _parsed;
+int builtin_ceil(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1){
@@ -800,12 +760,11 @@ int builtin_ceil(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_parsenum(void *_lisp, void *_args, void *_parsed, size_t argnum,
+int builtin_parsenum(void *_lisp, void *_node, size_t argnum,
                      void *_returned) {
-    Var *args = _parsed;
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1){
@@ -822,30 +781,25 @@ int builtin_parsenum(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_callif(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
+int builtin_callif(void *_lisp, void *_node, size_t argnum, void *_returned) {
     /* TODO: Rewrite it! */
     return TL_SUCCESS;
 }
 
-int builtin_len(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned) {
-    Var *args = _parsed;
+int builtin_len(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     rc = var_num_from_float(_returned, VAR_LEN(args));
     return rc;
 }
 
-int builtin_strlen(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
-    Var *args = _parsed;
+int builtin_strlen(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
@@ -854,13 +808,11 @@ int builtin_strlen(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return rc;
 }
 
-int builtin_get(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                void *_returned) {
-    Var *args = _parsed;
+int builtin_get(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     int index;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(args[1].type != TL_T_NUM) return TL_ERR_BAD_TYPE;
@@ -888,13 +840,11 @@ int builtin_get(void *_lisp, void *_args, void *_parsed, size_t argnum,
     return TL_SUCCESS;
 }
 
-int builtin_strget(void *_lisp, void *_args, void *_parsed, size_t argnum,
-                   void *_returned) {
-    Var *args = _parsed;
+int builtin_strget(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    Var *args = NULL; /* TODO: Fix required! */
     int rc;
     int index;
     TL_UNUSED(_lisp);
-    TL_UNUSED(_args);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;

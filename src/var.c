@@ -43,6 +43,7 @@
  * 2024/10/08: Append to list.
  * 2024/10/15: Store the user function node. Handle calls in var_copy.
  *             var_call: initialize a Var.
+ * 2024/10/18: Fixed builtin function prototype.
  */
 
 #include <var.h>
@@ -127,7 +128,7 @@ int var_raw_str(String *string, char *data, size_t len) {
     return TL_SUCCESS;
 }
 
-int var_builtin_func(Var *var, int f(void*, void*, void*, size_t, void*),
+int var_builtin_func(Var *var, int f(void*, void*, size_t, void*),
                      char parse) {
     var->type = TL_T_FUNC;
     var->items = malloc(sizeof(Item));
