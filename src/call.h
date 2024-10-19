@@ -52,6 +52,7 @@
 int call_exec(TinyLisp *lisp, Node *node, Var *returned);
 int call_get_arg(TinyLisp *lisp, Node *node, size_t idx, Var *dest,
                  char parse);
+int call_get_arg_raw(Node *node, size_t idx, Var **var);
 int call_parse_arg(TinyLisp *lisp, Var *src, Var *dest);
 
 #endif

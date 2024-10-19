@@ -129,6 +129,12 @@ int call_get_arg(TinyLisp *lisp, Node *node, size_t idx, Var *dest,
     return TL_SUCCESS;
 }
 
+int call_get_arg_raw(Node *node, size_t idx, Var **var) {
+    if(idx >= node->childnum) return TL_ERR_TOO_FEW_ARGS;
+    *var = ((Node**)node->childs)[idx]->var;
+    return TL_SUCCESS;
+}
+
 int call_parse_arg(TinyLisp *lisp, Var *src, Var *dest) {
     char found = 0;
     int rc;
