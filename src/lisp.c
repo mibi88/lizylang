@@ -347,6 +347,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
         if(rc){
             TL_ERROR(rc);
         }
+        var_free(&returned);
     }
     return TL_SUCCESS;
 }

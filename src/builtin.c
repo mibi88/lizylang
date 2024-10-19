@@ -251,6 +251,7 @@ int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned) {
     if(rc) return rc;
     if(VAR_LEN(&data) < 1){
         puts("()");
+        var_free(&data);
         return TL_SUCCESS;
     }
     if(VAR_LEN(&data) > 1) fputc('(', stdout);
@@ -269,12 +270,14 @@ int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned) {
                 if(i < VAR_LEN(&data)-1) fputc(' ', stdout);
                 break;
             default:
+                var_free(&data);
                 return TL_ERR_BAD_TYPE;
         }
     }
     if(VAR_LEN(&data) > 1) fputc(')', stdout);
     fputc('\n', stdout);
     rc = var_copy(&data, _returned);
+    var_free(&data);
     if(rc) return rc;
     return TL_SUCCESS;
 }
@@ -331,22 +334,29 @@ int builtin_input(void *_lisp, void *_node, size_t argnum, void *_returned) {
     int rc;
     char c;
     Var str;
-    rc = call_get_arg(lisp, node, 0, &str, 1);
-    if(rc) return rc;
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
-    else if(str.type != TL_T_STR) return TL_ERR_BAD_TYPE;
-    if(VAR_LEN(&str) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    rc = call_get_arg(lisp, node, 0, &str, 1);
+    if(rc) return rc;
+    if(str.type != TL_T_STR){
+        var_free(&str);
+        return TL_ERR_BAD_TYPE;
+    }
+    if(VAR_LEN(&str) != 1){
+        var_free(&str);
+        return TL_ERR_INVALID_LIST_SIZE;
+    }
     fwrite(VAR_STR_DATA(VAR_GET_ITEM(&str, 0)), 1,
            VAR_STR_LEN(VAR_GET_ITEM(&str, 0)), stdout);
     var_str(_returned, "", 0);
     while((c = getc(stdin)) != '\n'){
         rc = var_str_add(_returned, &c, 1);
         if(rc){
-            var_free(_returned);
+            var_free(&str);
             return rc;
         }
     }
+    var_free(&str);
     return TL_SUCCESS;
 }
 

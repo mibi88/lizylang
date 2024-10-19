@@ -119,6 +119,7 @@ int call_get_arg(TinyLisp *lisp, Node *node, size_t idx, Var *dest,
             return rc;
         }
         var_copy(&parsed, dest);
+        var_free(&parsed);
     }
     return TL_SUCCESS;
 }
