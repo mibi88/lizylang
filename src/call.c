@@ -53,6 +53,7 @@ int call_exec(TinyLisp *lisp, Node *node, Var *returned) {
     Function *function;
     char found;
     size_t i;
+    int rc;
     if(node->var->type != TL_T_CALL){
         return TL_ERR_VALUE_OUTSIDE_OF_CALL;
     }
@@ -94,7 +95,8 @@ int call_exec(TinyLisp *lisp, Node *node, Var *returned) {
     }
     if(function->builtin){
         /* Call the right builtin function. */
-        function->ptr.f(lisp, node, node->childnum, returned);
+        rc = function->ptr.f(lisp, node, node->childnum, returned);
+        if(rc) return rc;
     }
     return TL_SUCCESS;
 }

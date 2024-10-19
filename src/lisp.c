@@ -50,7 +50,7 @@
  * 2024/10/15: Start generating a tree.
  * 2024/10/16: Add data to the nodes. Finish generating the tree. Better tree
  *             debugging.
- * 2024/10/19: Handle errors when calling functions.
+ * 2024/10/19: Handle errors when calling functions. Fixed error handling.
  */
 
 #include <lisp.h>
@@ -70,6 +70,7 @@ int tl_init(TinyLisp *lisp, char *buffer, size_t sz) {
     lisp->argstack_cur = 0;
     lisp->perform_calls = 1;
     node_init(&lisp->node, NULL);
+    lisp->node.line = 0;
 #if TL_LEAK_CHECK
     mtrace();
 #endif
@@ -176,6 +177,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
                                     free(node_data);
                                     TL_ERROR(rc);
                                 }
+                                allocated->line = lisp->line;
                                 rc = node_add_child(current, allocated);
                                 if(rc){
                                     free(allocated);
@@ -221,6 +223,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
                         free(node_data);
                         TL_ERROR(rc);
                     }
+                    allocated->line = lisp->line;
                     rc = node_add_child(current, allocated);
                     if(rc){
                         free(allocated);
@@ -280,6 +283,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
                         free(node_data);
                         TL_ERROR(rc);
                     }
+                    allocated->line = lisp->line;
                     rc = node_add_child(current, allocated);
                     if(rc){
                         free(allocated);
@@ -345,6 +349,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
     for(i=0;i<lisp->node.childnum;i++){
         rc = call_exec(lisp, ((Node**)lisp->node.childs)[i], &returned);
         if(rc){
+            lisp->line = ((Node**)lisp->node.childs)[i]->line;
             TL_ERROR(rc);
         }
         var_free(&returned);

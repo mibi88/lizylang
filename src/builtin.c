@@ -284,46 +284,53 @@ int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned) {
 
 int builtin_printraw(void *_lisp, void *_node, size_t argnum,
                      void *_returned) {
+    TinyLisp *lisp = _lisp;
+    Node *node = _node;
     int rc;
     size_t i;
-    Var *args = NULL; /* TODO: Fix required! */
+    Var data;
     TL_UNUSED(_lisp);
     TL_UNUSED(_node);
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
-    if(VAR_LEN(args) < 1){
+    rc = call_get_arg(lisp, node, 0, &data, 0);
+    if(rc) return rc;
+    if(VAR_LEN(&data) < 1){
         puts("()");
+        var_free(&data);
         return TL_SUCCESS;
     }
-    if(VAR_LEN(args) > 1) fputc('(', stdout);
-    for(i=0;i<VAR_LEN(args);i++){
-        switch(args[0].type){
+    if(VAR_LEN(&data) > 1) fputc('(', stdout);
+    for(i=0;i<VAR_LEN(&data);i++){
+        switch(data.type){
             case TL_T_STR:
-                if(VAR_LEN(args) > 1) fputc('"', stdout);
-                fwrite(VAR_STR_DATA(VAR_GET_ITEM(args, i)), 1,
-                       VAR_STR_LEN(VAR_GET_ITEM(args, i)), stdout);
-                if(VAR_LEN(args) > 1) fputc('"', stdout);
-                if(i < VAR_LEN(args)-1) fputc(' ', stdout);
+                if(VAR_LEN(&data) > 1) fputc('"', stdout);
+                fwrite(VAR_STR_DATA(VAR_GET_ITEM(&data, i)), 1,
+                       VAR_STR_LEN(VAR_GET_ITEM(&data, i)), stdout);
+                if(VAR_LEN(&data) > 1) fputc('"', stdout);
+                if(i < VAR_LEN(&data)-1) fputc(' ', stdout);
                 break;
             case TL_T_NAME:
                 fputs("<variable: ", stdout);
-                fwrite(VAR_STR_DATA(VAR_GET_ITEM(args, i)), 1,
-                       VAR_STR_LEN(VAR_GET_ITEM(args, i)), stdout);
+                fwrite(VAR_STR_DATA(VAR_GET_ITEM(&data, i)), 1,
+                       VAR_STR_LEN(VAR_GET_ITEM(&data, i)), stdout);
                 fputc('>', stdout);
-                if(i < VAR_LEN(args)-1) fputc(' ', stdout);
+                if(i < VAR_LEN(&data)-1) fputc(' ', stdout);
                 break;
             case TL_T_NUM:
                 /* TODO: Custom number conversion function. */
-                printf("%f", VAR_NUM(VAR_GET_ITEM(args, i)));
-                if(i < VAR_LEN(args)-1) fputc(' ', stdout);
+                printf("%f", VAR_NUM(VAR_GET_ITEM(&data, i)));
+                if(i < VAR_LEN(&data)-1) fputc(' ', stdout);
                 break;
             default:
+                var_free(&data);
                 return TL_ERR_BAD_TYPE;
         }
     }
-    if(VAR_LEN(args) > 1) fputc(')', stdout);
+    if(VAR_LEN(&data) > 1) fputc(')', stdout);
     fputc('\n', stdout);
-    rc = var_copy(args, _returned);
+    rc = var_copy(&data, _returned);
+    var_free(&data);
     if(rc) return rc;
     return TL_SUCCESS;
 }
@@ -426,11 +433,11 @@ int builtin_merge(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_params(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    TinyLisp *lisp = _lisp;
+    Node *node = _node;
+    Var param;
     int rc;
-    Var *args = NULL; /* TODO: Fix required! */
     size_t i;
-    TL_UNUSED(_lisp);
-    TL_UNUSED(_node);
     if(!argnum){
         ((Var*)_returned)->null = 0;
         ((Var*)_returned)->size = 0;
@@ -438,10 +445,16 @@ int builtin_params(void *_lisp, void *_node, size_t argnum, void *_returned) {
         ((Var*)_returned)->type = TL_T_NAME;
         return TL_SUCCESS;
     }
-    rc = var_copy(args, _returned);
+    rc = call_get_arg(lisp, node, 0, _returned, 0);
     if(rc) return rc;
     for(i=1;i<argnum;i++){
-        rc = var_append(args+i, _returned);
+        rc = call_get_arg(lisp, node, i, &param, 0);
+        if(rc){
+            var_free(_returned);
+            return rc;
+        }
+        rc = var_append(&param, _returned);
+        var_free(&param);
         if(rc){
             var_free(_returned);
             return rc;
