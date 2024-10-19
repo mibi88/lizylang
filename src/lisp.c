@@ -50,6 +50,7 @@
  * 2024/10/15: Start generating a tree.
  * 2024/10/16: Add data to the nodes. Finish generating the tree. Better tree
  *             debugging.
+ * 2024/10/19: Handle errors when calling functions.
  */
 
 #include <lisp.h>
@@ -96,6 +97,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
     Node *allocated;
     Node *current = &lisp->node;
     Var *node_data;
+    Var returned;
     const char *messages[TL_RC_AMOUNT] = {
         "Unknown error!",
         "Token full!",
@@ -341,7 +343,10 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
         escaped = 0;
     }
     for(i=0;i<lisp->node.childnum;i++){
-        call_exec(lisp, ((Node**)lisp->node.childs)[i]);
+        rc = call_exec(lisp, ((Node**)lisp->node.childs)[i], &returned);
+        if(rc){
+            TL_ERROR(rc);
+        }
     }
     return TL_SUCCESS;
 }

@@ -45,6 +45,7 @@
  * 2024/10/13: Added list management functions.
  * 2024/10/16: Started adding calling back.
  * 2024/10/18: Update the prototypes.
+ * 2024/10/19: Updated some functions.
  */
 
 #include <builtin.h>
@@ -114,20 +115,27 @@ int builtin_comment(void *_lisp, void *_node, size_t argnum, void *_returned) {
 
 int builtin_strdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
-    Var *args = NULL; /* TODO: Fix required! */
+    Node *node = _node;
+    Var varname;
     Var value;
     String name;
     int rc;
     TL_UNUSED(_node);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
-    if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
-    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
-    rc = call_parse_arg(lisp, args+1, &value);
+    rc = call_get_arg(lisp, node, 0, &varname, 0);
     if(rc) return rc;
+    rc = call_get_arg(lisp, node, 1, &value, 1);
+    if(rc){
+        var_free(&value);
+        return rc;
+    }
+    if(varname.type != TL_T_NAME) return TL_ERR_BAD_TYPE;
+    if(VAR_LEN(&varname) != 1) return TL_ERR_INVALID_LIST_SIZE;
     if(value.type != TL_T_STR) return TL_ERR_BAD_TYPE;
-    rc = var_raw_str(&name, VAR_STR_DATA(VAR_GET_ITEM(args, 0)),
-                     VAR_STR_LEN(VAR_GET_ITEM(args, 0)));
+    rc = var_raw_str(&name, VAR_STR_DATA(VAR_GET_ITEM(&varname, 0)),
+                     VAR_STR_LEN(VAR_GET_ITEM(&varname, 0)));
+    var_free(&varname);
     if(rc){
         var_free(&value);
         free(name.data);
@@ -150,20 +158,27 @@ int builtin_strdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
 
 int builtin_numdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
-    Var *args = NULL; /* TODO: Fix required! */
+    Node *node = _node;
+    Var varname;
     Var value;
     String name;
     int rc;
     TL_UNUSED(_node);
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
-    if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
-    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
-    rc = call_parse_arg(lisp, args+1, &value);
+    rc = call_get_arg(lisp, node, 0, &varname, 0);
     if(rc) return rc;
+    rc = call_get_arg(lisp, node, 1, &value, 1);
+    if(rc){
+        var_free(&value);
+        return rc;
+    }
+    if(varname.type != TL_T_NAME) return TL_ERR_BAD_TYPE;
+    if(VAR_LEN(&varname) != 1) return TL_ERR_INVALID_LIST_SIZE;
     if(value.type != TL_T_NUM) return TL_ERR_BAD_TYPE;
-    rc = var_raw_str(&name, VAR_STR_DATA(VAR_GET_ITEM(args, 0)),
-                     VAR_STR_LEN(VAR_GET_ITEM(args, 0)));
+    rc = var_raw_str(&name, VAR_STR_DATA(VAR_GET_ITEM(&varname, 0)),
+                     VAR_STR_LEN(VAR_GET_ITEM(&varname, 0)));
+    var_free(&varname);
     if(rc){
         var_free(&value);
         free(name.data);
@@ -225,38 +240,41 @@ int builtin_del(void *_lisp, void *_node, size_t argnum,  void *_returned) {
 }
 
 int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    TinyLisp *lisp = _lisp;
+    Node *node = _node;
     int rc;
     size_t i;
-    Var *args = NULL; /* TODO: Fix required! */
-    TL_UNUSED(_lisp);
+    Var data;
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
-    if(VAR_LEN(args) < 1){
+    rc = call_get_arg(lisp, node, 0, &data, 1);
+    if(rc) return rc;
+    if(VAR_LEN(&data) < 1){
         puts("()");
         return TL_SUCCESS;
     }
-    if(VAR_LEN(args) > 1) fputc('(', stdout);
-    for(i=0;i<VAR_LEN(args);i++){
-        switch(args[0].type){
+    if(VAR_LEN(&data) > 1) fputc('(', stdout);
+    for(i=0;i<VAR_LEN(&data);i++){
+        switch(data.type){
             case TL_T_STR:
-                if(VAR_LEN(args) > 1) fputc('"', stdout);
-                fwrite(VAR_STR_DATA(VAR_GET_ITEM(args, i)), 1,
-                       VAR_STR_LEN(VAR_GET_ITEM(args, i)), stdout);
-                if(VAR_LEN(args) > 1) fputc('"', stdout);
-                if(i < VAR_LEN(args)-1) fputc(' ', stdout);
+                if(VAR_LEN(&data) > 1) fputc('"', stdout);
+                fwrite(VAR_STR_DATA(VAR_GET_ITEM(&data, i)), 1,
+                       VAR_STR_LEN(VAR_GET_ITEM(&data, i)), stdout);
+                if(VAR_LEN(&data) > 1) fputc('"', stdout);
+                if(i < VAR_LEN(&data)-1) fputc(' ', stdout);
                 break;
             case TL_T_NUM:
                 /* TODO: Custom number conversion function. */
-                printf("%f", VAR_NUM(VAR_GET_ITEM(args, i)));
-                if(i < VAR_LEN(args)-1) fputc(' ', stdout);
+                printf("%f", VAR_NUM(VAR_GET_ITEM(&data, i)));
+                if(i < VAR_LEN(&data)-1) fputc(' ', stdout);
                 break;
             default:
                 return TL_ERR_BAD_TYPE;
         }
     }
-    if(VAR_LEN(args) > 1) fputc(')', stdout);
+    if(VAR_LEN(&data) > 1) fputc(')', stdout);
     fputc('\n', stdout);
-    rc = var_copy(args, _returned);
+    rc = var_copy(&data, _returned);
     if(rc) return rc;
     return TL_SUCCESS;
 }
@@ -308,16 +326,19 @@ int builtin_printraw(void *_lisp, void *_node, size_t argnum,
 }
 
 int builtin_input(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    TinyLisp *lisp = _lisp;
+    Node *node = _node;
     int rc;
     char c;
-    Var *args = NULL; /* TODO: Fix required! */
-    TL_UNUSED(_lisp);
+    Var str;
+    rc = call_get_arg(lisp, node, 0, &str, 1);
+    if(rc) return rc;
     if(argnum < 1) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 1) return TL_ERR_TOO_MANY_ARGS;
-    else if(args[0].type != TL_T_STR) return TL_ERR_BAD_TYPE;
-    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
-    fwrite(VAR_STR_DATA(VAR_GET_ITEM(args, 0)), 1,
-           VAR_STR_LEN(VAR_GET_ITEM(args, 0)), stdout);
+    else if(str.type != TL_T_STR) return TL_ERR_BAD_TYPE;
+    if(VAR_LEN(&str) != 1) return TL_ERR_INVALID_LIST_SIZE;
+    fwrite(VAR_STR_DATA(VAR_GET_ITEM(&str, 0)), 1,
+           VAR_STR_LEN(VAR_GET_ITEM(&str, 0)), stdout);
     var_str(_returned, "", 0);
     while((c = getc(stdin)) != '\n'){
         rc = var_str_add(_returned, &c, 1);
@@ -330,25 +351,52 @@ int builtin_input(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_add(void *_lisp, void *_node, size_t argnum, void *_returned) {
+    TinyLisp *lisp = _lisp;
+    Node *node = _node;
     int rc;
-    Var *args = NULL; /* TODO: Fix required! */
-    TL_UNUSED(_lisp);
+    Var a;
+    Var b;
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
-    else if(args[0].type != args[1].type) return TL_ERR_BAD_TYPE;
-    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
-    if(VAR_LEN(args+1) != 1) return TL_ERR_INVALID_LIST_SIZE;
-    switch(args[0].type){
+    rc = call_get_arg(lisp, node, 0, &a, 1);
+    if(rc) return rc;
+    rc = call_get_arg(lisp, node, 1, &b, 1);
+    if(rc){
+        var_free(&a);
+        return rc;
+    }
+    else if(a.type != b.type){
+        var_free(&a);
+        var_free(&b);
+        return TL_ERR_BAD_TYPE;
+    }
+    if(VAR_LEN(&a) != 1){
+        var_free(&a);
+        var_free(&b);
+        return TL_ERR_INVALID_LIST_SIZE;
+    }
+    if(VAR_LEN(&b) != 1){
+        var_free(&a);
+        var_free(&b);
+        return TL_ERR_INVALID_LIST_SIZE;
+    }
+    switch(a.type){
         case TL_T_STR:
-            rc = var_str_concat(_returned, args, args+1);
+            rc = var_str_concat(_returned, &a, &b);
+            var_free(&a);
+            var_free(&b);
             if(rc) return rc;
             break;
         case TL_T_NUM:
-            rc = var_num_from_float(_returned, VAR_NUM(VAR_GET_ITEM(args, 0))+
-                                    VAR_NUM(VAR_GET_ITEM(args+1, 0)));
+            rc = var_num_from_float(_returned, VAR_NUM(VAR_GET_ITEM(&a, 0))+
+                                    VAR_NUM(VAR_GET_ITEM(&b, 0)));
+            var_free(&a);
+            var_free(&b);
             if(rc) return rc;
             break;
         default:
+            var_free(&a);
+            var_free(&b);
             return TL_ERR_BAD_TYPE;
     }
     return TL_SUCCESS;
