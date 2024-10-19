@@ -45,6 +45,7 @@
  *             user functions.
  * 2024/10/15: Store the tree and start generating it. Store the currently
  *             executed node.
+ * 2024/10/19: Preparing call-by-need evaluation.
  */
 
 #ifndef LISP_H
@@ -73,7 +74,6 @@ typedef struct {
     size_t argstack_fnc[TL_ARGSTACK_SZ];
     size_t argstack_cur;
     size_t line;
-    char perform_calls;
     Var last;
     Node node;
     void *current_node;

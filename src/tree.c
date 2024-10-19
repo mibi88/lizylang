@@ -35,6 +35,7 @@
 /* CHANGELOG
  *
  * 2024/10/15: Created this file.
+ * 2024/10/19: Adding function definition and calling.
  */
 
 #include <tree.h>
@@ -63,6 +64,7 @@ int node_add_child(Node *parent, Node *child) {
     childs = parent->childs;
     childs[parent->childnum] = child;
     childs[parent->childnum]->parent = parent;
+    childs[parent->childnum]->idx = parent->childnum;
     parent->childnum++;
     return TL_SUCCESS;
 }

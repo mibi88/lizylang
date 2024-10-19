@@ -97,6 +97,9 @@ int call_exec(TinyLisp *lisp, Node *node, Var *returned) {
         /* Call the right builtin function. */
         rc = function->ptr.f(lisp, node, node->childnum, returned);
         if(rc) return rc;
+    }else{
+        /* TODO */
+        var_num_from_float(returned, 0);
     }
     return TL_SUCCESS;
 }

@@ -87,7 +87,7 @@
 (strdef newmap "")
 (numdef living 0)
 
-(fncdef update_line (params l i))
+(fncdef update_line (params l i)
     (set living
         (+
             (+
@@ -133,21 +133,21 @@
             " "))
     ))
     (callif (< i (- map_w 1)) update_line l (+ i 1))
-(defend)
+)
 
-(fncdef updatemap (params i))
+(fncdef updatemap (params i)
     (set line "")
     (update_line i 0)
     (set newmap (++ newmap line))
     (callif (< i (- map_h 1)) updatemap (+ i 1))
-(defend)
+)
 
-(fncdef drawmap (params i))
+(fncdef drawmap (params i)
     (print (get map i))
     (callif (< i (- map_h 1)) drawmap (+ i 1))
-(defend)
+)
 
-(fncdef mainloop (params i m))
+(fncdef mainloop (params i m)
     (print "-------------------")
     (print "Iteration:")
     (print i)
@@ -159,7 +159,7 @@
     (updatemap 1)
     (set map newmap)
     (callif (< i m) mainloop (+ i 1) m)
-(defend)
+)
 
 (mainloop 0 110)
 

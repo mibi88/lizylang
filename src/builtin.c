@@ -45,7 +45,7 @@
  * 2024/10/13: Added list management functions.
  * 2024/10/16: Started adding calling back.
  * 2024/10/18: Update the prototypes.
- * 2024/10/19: Updated some functions.
+ * 2024/10/19: Updated some functions. Removed defend.
  */
 
 #include <builtin.h>
@@ -77,7 +77,6 @@ int builtin_register_funcs(TinyLisp *lisp) {
     TL_REGISTER_FUNC("params", 0, builtin_params);
     TL_REGISTER_FUNC("list", 1, builtin_list);
     TL_REGISTER_FUNC("fncdef", 0, builtin_fncdef);
-    TL_REGISTER_FUNC("defend", 0, builtin_defend);
     TL_REGISTER_FUNC("if", 1, builtin_if);
     TL_REGISTER_FUNC("<", 1, builtin_smaller);
     TL_REGISTER_FUNC(">", 1, builtin_bigger);
@@ -490,65 +489,53 @@ int builtin_list(void *_lisp, void *_node, size_t argnum, void *_returned) {
 
 int builtin_fncdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
+    Node *node = _node;
     int rc;
-    Var *args = NULL; /* TODO: Fix required! */
     Var function;
+    Var fncname;
+    Var params;
     String name;
-    TL_UNUSED(_node);
-    if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
-    if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
-    else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
-    rc = var_user_func(&function, lisp->current_node, args+1);
-    /*printf("%d\n", lisp->buffer[lisp->i+2]);*/
+    if(argnum < 3) return TL_ERR_TOO_FEW_ARGS;
+    rc = call_get_arg(lisp, node, 0, &fncname, 0);
     if(rc) return rc;
-    rc = var_raw_str(&name, VAR_STR_DATA(VAR_GET_ITEM(args, 0)),
-                     VAR_STR_LEN(VAR_GET_ITEM(args, 0)));
+    rc = call_get_arg(lisp, node, 1, &params, 0);
+    if(rc){
+        var_free(&fncname);
+        return rc;
+    }
+    if(VAR_LEN(&fncname) != 1){
+        var_free(&fncname);
+        var_free(&params);
+        return TL_ERR_INVALID_LIST_SIZE;
+    }
+    rc = var_user_func(&function, lisp->current_node, &params);
+    if(rc){
+        var_free(&fncname);
+        var_free(&params);
+        return rc;
+    }
+    rc = var_raw_str(&name, VAR_STR_DATA(VAR_GET_ITEM(&fncname, 0)),
+                     VAR_STR_LEN(VAR_GET_ITEM(&fncname, 0)));
     if(rc){
         var_free(&function);
+        var_free(&fncname);
+        var_free(&params);
         free(name.data);
         return rc;
     }
     rc = tl_add_var(lisp, &function, &name);
     if(rc){
         var_free(&function);
+        var_free(&fncname);
+        var_free(&params);
         free(name.data);
         return rc;
     }
-    lisp->perform_calls = 0;
+    /* TODO: Store calls. */
+    var_free(&fncname);
+    var_free(&params);
     rc = var_num_from_float(_returned, 0);
     return rc;
-}
-
-int builtin_defend(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
-    size_t n;
-    int rc;
-    TL_UNUSED(_node);
-    if(argnum > 0) return TL_ERR_TOO_MANY_ARGS;
-    lisp->perform_calls = 1;
-    if(lisp->stack_cur){
-        lisp->stack_cur--;
-        lisp->current_node = lisp->stack[lisp->stack_cur].current_node;
-        for(n=0;n<lisp->stack[lisp->stack_cur].argnum;n++){
-            var_free(lisp->stack[lisp->stack_cur].args+n);
-        }
-        free(lisp->stack[lisp->stack_cur].args);
-        lisp->stack[lisp->stack_cur].args = NULL;
-        var_free(&lisp->stack[lisp->stack_cur].params);
-    }else{
-        return TL_ERR_INTERNAL;
-    }
-    /* TODO: Fix return value bug properly. */
-    for(n=(signed)lisp->argstack_cur-2 < 0 ? 0 : lisp->argstack_cur-2;
-        n<lisp->argstack_cur;n++){
-        var_free(lisp->argstack+n);
-    }
-    if((signed)lisp->argstack_cur-2 < 0) lisp->argstack_cur = 0;
-    else lisp->argstack_cur -= 2;
-    rc = var_copy(&lisp->last, _returned);
-    if(rc) return rc;
-    /*printf("%ld, %ld\n", lisp->i, lisp->line);*/
-    return TL_SUCCESS;
 }
 
 int builtin_if(void *_lisp, void *_node, size_t argnum, void *_returned) {

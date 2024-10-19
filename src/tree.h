@@ -35,6 +35,7 @@
 /* CHANGELOG
  *
  * 2024/10/15: Created this file.
+ * 2024/10/19: Adding function definition and calling.
  */
 
 #ifndef TREE_H
@@ -48,6 +49,7 @@ typedef struct {
     Var *var;
     void *childs;
     void *parent;
+    size_t idx;
     size_t childnum;
     size_t line;
     char has_value;

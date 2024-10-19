@@ -68,7 +68,6 @@ int tl_init(TinyLisp *lisp, char *buffer, size_t sz) {
     lisp->stack_cur = 0;
     lisp->fstack_cur = 0;
     lisp->argstack_cur = 0;
-    lisp->perform_calls = 1;
     node_init(&lisp->node, NULL);
     lisp->node.line = 0;
 #if TL_LEAK_CHECK
@@ -97,6 +96,7 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
     size_t i;
     Node *allocated;
     Node *current = &lisp->node;
+    Node *node;
     Var *node_data;
     Var returned;
     const char *messages[TL_RC_AMOUNT] = {
@@ -347,9 +347,10 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
         escaped = 0;
     }
     for(i=0;i<lisp->node.childnum;i++){
-        rc = call_exec(lisp, ((Node**)lisp->node.childs)[i], &returned);
+        node = ((Node**)lisp->node.childs)[i];
+        rc = call_exec(lisp, node, &returned);
         if(rc){
-            lisp->line = ((Node**)lisp->node.childs)[i]->line;
+            lisp->line = node->line;
             TL_ERROR(rc);
         }
         var_free(&returned);

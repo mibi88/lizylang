@@ -8,9 +8,9 @@
 
 (strdef name (input "Name > "))
 
-(fncdef hello (params name))
+(fncdef hello (params name)
     (print (+ (+ "Hello world " name) "!"))
-(defend)
+)
 
 (hello "someone")
 (hello name)
