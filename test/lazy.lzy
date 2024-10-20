@@ -17,8 +17,12 @@
     (if a b c)
 )
 
-(if2 1 (print (+ a b)) (print (- a b)))
-(if2 0 (print (+ a b)) (print (- a b)))
+(fncdef if3 (params a b c)
+    (if2 a b c)
+)
 
-(if2 1 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
-(if2 0 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
+(if3 1 (print (+ a b)) (print (- a b)))
+(if3 0 (print (+ a b)) (print (- a b)))
+
+(if3 1 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
+(if3 0 (print (+ (get_a a b) b)) (print (- a (get_b a b))))

@@ -107,6 +107,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         if(node->childnum > VAR_LEN((Var*)function->params)){
             return TL_ERR_TOO_MANY_ARGS;
         }
+        lisp->stack[lisp->stack_cur].call = node;
         lisp->stack[lisp->stack_cur].function = function;
         lisp->stack[lisp->stack_cur].args =
                 malloc(((Node*)function->ptr.fncdef)->childnum*sizeof(Var));
@@ -196,6 +197,7 @@ int call_parse_arg(LizyLang *lisp, Var *src, Var *dest, size_t context) {
     int rc;
     size_t n;
     Function *function;
+    Var out;
     if(!src->size){
         dest->size = 0;
         dest->items = NULL;
@@ -205,8 +207,8 @@ int call_parse_arg(LizyLang *lisp, Var *src, Var *dest, size_t context) {
         dest->type = src->type;
     }
     if(src->type == TL_T_NAME){
-        if(lisp->stack_cur){
-            if(context < 1 || context > lisp->stack_cur){
+        if(lisp->stack_cur && context){
+            if(context > lisp->stack_cur){
                 return TL_ERR_INTERNAL;
             }
             context--;
@@ -215,12 +217,25 @@ int call_parse_arg(LizyLang *lisp, Var *src, Var *dest, size_t context) {
 #endif
             function = lisp->stack[context].function;
             if(function->builtin) return TL_ERR_INTERNAL;
-            for(n=0;n<VAR_LEN((Var*)function->params);
-                n++){
+            for(n=0;n<VAR_LEN((Var*)function->params);n++){
                 /*
                 fwrite(((Var*)function->params)->items[n].string.data, 1,
                        ((Var*)function->params)->items[n].string.len, stdout);
                 */
+                if(src->items->string.len ==
+                   ((Var*)function->params)->items[n].string.len){
+                    if(!memcmp(src->items->string.data,
+                       ((Var*)function->params)->items[n].string.data,
+                       src->items->string.len)){
+                        rc = call_parse_arg(lisp,
+                                            ((Node**)((Node*)lisp->stack
+                                            [context].call)->childs)[n]->var,
+                                            dest, context);
+                        /*if(rc) return rc;
+                        rc = var_copy(&out, dest);*/
+                        return rc;
+                    }
+                }
             }
         }
         if(!found){

@@ -64,6 +64,7 @@ typedef struct {
     size_t var_num;
     struct{
         Function *function;
+        void *call;
         Var *args;
         char *evaluated;
     }stack[TL_STACK_SZ];
