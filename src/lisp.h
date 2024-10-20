@@ -45,7 +45,7 @@
  *             user functions.
  * 2024/10/15: Store the tree and start generating it. Store the currently
  *             executed node.
- * 2024/10/19: Preparing call-by-need evaluation.
+ * 2024/10/19: Preparing call-by-need evaluation. New stack.
  */
 
 #ifndef LISP_H
@@ -62,10 +62,9 @@ typedef struct {
     String *var_names;
     size_t var_num;
     struct{
-        Node *current_node;
+        Node *fncdef;
         Var *args;
-        size_t argnum;
-        Var params;
+        char *evaluated;
     }stack[TL_STACK_SZ];
     size_t stack_cur;
     Call fstack[TL_FSTACK_SZ];

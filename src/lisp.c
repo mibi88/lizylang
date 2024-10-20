@@ -51,6 +51,7 @@
  * 2024/10/16: Add data to the nodes. Finish generating the tree. Better tree
  *             debugging.
  * 2024/10/19: Handle errors when calling functions. Fixed error handling.
+ * 2024/10/20: Fixed line number in error message. New stack.
  */
 
 #include <lisp.h>
@@ -348,9 +349,9 @@ int tl_run(LizyLang *lisp, void error(char*, void*), void *data) {
     }
     for(i=0;i<lisp->node.childnum;i++){
         node = ((Node**)lisp->node.childs)[i];
+        lisp->line = node->line;
         rc = call_exec(lisp, node, &returned);
         if(rc){
-            lisp->line = node->line;
             TL_ERROR(rc);
         }
         var_free(&returned);
@@ -371,22 +372,27 @@ void lisp_free_nodes(Node *node, void *_lisp) {
 int tl_free(LizyLang *lisp) {
     size_t i, n;
     int out = TL_SUCCESS;
-    node_free_childs(&lisp->node, lisp_free_nodes, lisp);
     for(i=0;i<lisp->var_num;i++){
         var_free(lisp->vars+i);
         var_free_str(lisp->var_names+i);
     }
     for(i=0;i<lisp->stack_cur;i++){
-        if(lisp->stack[i].argnum){
-            if(lisp->stack[i].args){
-                for(n=0;n<lisp->stack[i].argnum;n++){
-                    var_free(lisp->stack[i].args+n);
+        if(lisp->stack[i].fncdef->childnum){
+            if(lisp->stack[i].evaluated){
+                for(n=0;n<((Node**)lisp->stack[i].fncdef->childs)[1]->childnum;
+                    n++){
+                    if(lisp->stack[i].evaluated[n]){
+                        var_free(lisp->stack[i].args+n);
+                    }
                 }
-                free(lisp->stack[i].args);
             }
+            free(lisp->stack[i].args);
+            lisp->stack[i].args = NULL;
+            free(lisp->stack[i].evaluated);
+            lisp->stack[i].evaluated = NULL;
         }
-        var_free(&lisp->stack[i].params);
     }
+    node_free_childs(&lisp->node, lisp_free_nodes, lisp);
     free(lisp->vars);
     free(lisp->var_names);
     var_free(&lisp->last);
@@ -429,25 +435,7 @@ int tl_set_var(LizyLang *lisp, Var *var, String *name) {
     char found = 0;
     int rc;
     if(lisp->stack_cur){
-        for(i=0;i<lisp->stack[lisp->stack_cur-1].params.size;i++){
-            if(name->len !=
-               lisp->stack[lisp->stack_cur-1].params.items[i].string.len){
-                continue;
-            }
-            if(!memcmp(lisp->stack[lisp->stack_cur-1]
-                       .params.items[i].string.data, name->data, name->len)){
-                /* Set the variable */
-                if(var->type != lisp->stack[lisp->stack_cur-1].args[i].type){
-                    return TL_ERR_BAD_TYPE;
-                }
-                rc = var_free(lisp->stack[lisp->stack_cur-1].args+i);
-                if(rc) return rc;
-                rc = var_copy(var, lisp->stack[lisp->stack_cur-1].args+i);
-                if(rc) return rc;
-                found = 1;
-                break;
-            }
-        }
+        /* TODO */
     }
     if(!found){
         for(i=0;i<lisp->var_num;i++){

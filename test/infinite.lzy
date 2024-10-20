@@ -1,0 +1,9 @@
+(comment "CHANGELOG
+          2024/10/20: New function definition syntax.")
+
+(fncdef loop (params)
+    (print "Hello!")
+    (loop)
+)
+
+(loop)

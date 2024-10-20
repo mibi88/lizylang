@@ -55,6 +55,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
     char found;
     size_t i;
     int rc;
+    size_t line;
     Var call_return;
     if(node->var->type != TL_T_CALL){
         return TL_ERR_VALUE_OUTSIDE_OF_CALL;
@@ -100,12 +101,23 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         rc = function->ptr.f(lisp, node, node->childnum, returned);
         if(rc) return rc;
     }else{
+        lisp->stack[lisp->stack_cur].fncdef = function->ptr.fncdef;
+        lisp->stack[lisp->stack_cur].args =
+                malloc(((Node*)function->ptr.fncdef)->childnum*sizeof(Var));
+        lisp->stack[lisp->stack_cur].evaluated =
+                malloc(((Node*)function->ptr.fncdef)->childnum*sizeof(char));
+        memset(lisp->stack[lisp->stack_cur].evaluated, 0,
+               ((Node*)function->ptr.fncdef)->childnum*sizeof(char));
+        lisp->stack_cur++;
+        if(lisp->stack_cur >= TL_STACK_SZ) return TL_ERR_STACK_OVERFLOW;
+        line = lisp->line;
         for(i=2;i<((Node*)function->ptr.fncdef)->childnum;i++){
             rc = call_exec(lisp,
                            ((Node**)((Node*)function->ptr.fncdef)->childs)[i],
                            &call_return);
             if(rc){
-                var_free(&call_return);
+                lisp->line =
+                    ((Node**)((Node*)function->ptr.fncdef)->childs)[i]->line;
                 return rc;
             }
             if(i < ((Node*)function->ptr.fncdef)->childnum-1){
@@ -113,6 +125,22 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
             }
         }
         *returned = call_return;
+        lisp->line = line;
+        lisp->stack_cur--;
+        if(lisp->stack[lisp->stack_cur].fncdef->childnum){
+            if(lisp->stack[lisp->stack_cur].evaluated){
+                for(i=0;i<((Node**)lisp->stack[lisp->stack_cur].fncdef->childs)
+                          [1]->childnum;i++){
+                    if(lisp->stack[lisp->stack_cur].evaluated[i]){
+                        var_free(lisp->stack[lisp->stack_cur].args+i);
+                    }
+                }
+            }
+            free(lisp->stack[lisp->stack_cur].args);
+            lisp->stack[lisp->stack_cur].args = NULL;
+            free(lisp->stack[lisp->stack_cur].evaluated);
+            lisp->stack[lisp->stack_cur].evaluated = NULL;
+        }
     }
     return TL_SUCCESS;
 }
@@ -162,25 +190,7 @@ int call_parse_arg(LizyLang *lisp, Var *src, Var *dest) {
     }
     if(src->type == TL_T_NAME){
         if(lisp->stack_cur){
-            for(n=0;n<lisp->stack[lisp->stack_cur-1].params.size;n++){
-                if(src->items[0].string.len !=
-                   lisp->stack[lisp->stack_cur-1]
-                   .params.items[n].string.len){
-                    continue;
-                }
-                if(!memcmp(lisp->stack[lisp->stack_cur-1]
-                           .params.items[n].string.data,
-                           src->items[0].string.data,
-                           src->items[0].string.len)){
-                    rc = var_copy(lisp->stack[lisp->stack_cur-1].args+n,
-                                  dest);
-                    if(rc){
-                        return rc;
-                    }
-                    found = 1;
-                    break;
-                }
-            }
+            /* TODO */
         }
         if(!found){
             for(n=0;n<lisp->var_num;n++){
