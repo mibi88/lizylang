@@ -77,13 +77,13 @@ typedef struct {
     Var last;
     Node node;
     void *current_node;
-} TinyLisp;
+} LizyLang;
 
-int tl_init(TinyLisp *lisp, char *buffer, size_t sz);
-int tl_add_var(TinyLisp *lisp, Var *var, String *name);
-int tl_set_var(TinyLisp *lisp, Var *var, String *name);
-int tl_del_var(TinyLisp *lisp, String *name);
-int tl_run(TinyLisp *lisp, void error(char*, void*), void *data);
-int tl_free(TinyLisp *lisp);
+int tl_init(LizyLang *lisp, char *buffer, size_t sz);
+int tl_add_var(LizyLang *lisp, Var *var, String *name);
+int tl_set_var(LizyLang *lisp, Var *var, String *name);
+int tl_del_var(LizyLang *lisp, String *name);
+int tl_run(LizyLang *lisp, void error(char*, void*), void *data);
+int tl_free(LizyLang *lisp);
 
 #endif

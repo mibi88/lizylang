@@ -59,7 +59,7 @@
 #include <builtin.h>
 #include <tree.h>
 
-int tl_init(TinyLisp *lisp, char *buffer, size_t sz) {
+int tl_init(LizyLang *lisp, char *buffer, size_t sz) {
     lisp->buffer = buffer;
     lisp->sz = sz;
     lisp->var_num = 0;
@@ -84,7 +84,7 @@ int tl_init(TinyLisp *lisp, char *buffer, size_t sz) {
                           return TL_ERR_TOKFULL; \
                       }
 
-int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
+int tl_run(LizyLang *lisp, void error(char*, void*), void *data) {
     char c;
     char token[TL_TOKEN_SZ];
     size_t token_cur = 0;
@@ -362,13 +362,13 @@ int tl_run(TinyLisp *lisp, void error(char*, void*), void *data) {
 #undef TL_ERROR
 
 void lisp_free_nodes(Node *node, void *_lisp) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     free(node->var);
     node->var = NULL;
     if(node != &lisp->node) free(node);
 }
 
-int tl_free(TinyLisp *lisp) {
+int tl_free(LizyLang *lisp) {
     size_t i, n;
     int out = TL_SUCCESS;
     node_free_childs(&lisp->node, lisp_free_nodes, lisp);
@@ -396,7 +396,7 @@ int tl_free(TinyLisp *lisp) {
     return out;
 }
 
-int tl_add_var(TinyLisp *lisp, Var *var, String *name) {
+int tl_add_var(LizyLang *lisp, Var *var, String *name) {
     Var *var_ptr;
     String *name_ptr;
     size_t i;
@@ -424,7 +424,7 @@ int tl_add_var(TinyLisp *lisp, Var *var, String *name) {
     return TL_SUCCESS;
 }
 
-int tl_set_var(TinyLisp *lisp, Var *var, String *name) {
+int tl_set_var(LizyLang *lisp, Var *var, String *name) {
     size_t i;
     char found = 0;
     int rc;
@@ -472,7 +472,7 @@ int tl_set_var(TinyLisp *lisp, Var *var, String *name) {
     return TL_SUCCESS;
 }
 
-int tl_del_var(TinyLisp *lisp, String *name) {
+int tl_del_var(LizyLang *lisp, String *name) {
     size_t i;
     char found = 0;
     int rc;

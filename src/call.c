@@ -50,7 +50,7 @@
 
 #define TL_MIN(a, b) ((a) < (b) ? (a) : (b))
 
-int call_exec(TinyLisp *lisp, Node *node, Var *returned) {
+int call_exec(LizyLang *lisp, Node *node, Var *returned) {
     Function *function;
     char found;
     size_t i;
@@ -107,7 +107,7 @@ int call_exec(TinyLisp *lisp, Node *node, Var *returned) {
     return TL_SUCCESS;
 }
 
-int call_get_arg(TinyLisp *lisp, Node *node, size_t idx, Var *dest,
+int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                  char parse) {
     Var parsed;
     Var *src;
@@ -138,7 +138,7 @@ int call_get_arg_raw(Node *node, size_t idx, Var **var) {
     return TL_SUCCESS;
 }
 
-int call_parse_arg(TinyLisp *lisp, Var *src, Var *dest) {
+int call_parse_arg(LizyLang *lisp, Var *src, Var *dest) {
     char found = 0;
     int rc;
     size_t n;

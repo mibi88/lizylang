@@ -49,10 +49,10 @@
 #include <defs.h>
 #include <var.h>
 
-int call_exec(TinyLisp *lisp, Node *node, Var *returned);
-int call_get_arg(TinyLisp *lisp, Node *node, size_t idx, Var *dest,
+int call_exec(LizyLang *lisp, Node *node, Var *returned);
+int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                  char parse);
 int call_get_arg_raw(Node *node, size_t idx, Var **var);
-int call_parse_arg(TinyLisp *lisp, Var *src, Var *dest);
+int call_parse_arg(LizyLang *lisp, Var *src, Var *dest);
 
 #endif

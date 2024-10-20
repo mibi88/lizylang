@@ -59,7 +59,7 @@
                                       rc = tl_add_var(lisp, &var, &name); \
                                       if(rc) return rc
 
-int builtin_register_funcs(TinyLisp *lisp) {
+int builtin_register_funcs(LizyLang *lisp) {
     int rc;
     Var var;
     String name;
@@ -114,7 +114,7 @@ int builtin_comment(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_strdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     Var varname;
     Var value;
@@ -157,7 +157,7 @@ int builtin_strdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_numdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     Var varname;
     Var value;
@@ -200,7 +200,7 @@ int builtin_numdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_set(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Var *args = NULL; /* TODO: Fix required! */
     Var value;
     int rc;
@@ -223,7 +223,7 @@ int builtin_set(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_del(void *_lisp, void *_node, size_t argnum,  void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Var *args = NULL; /* TODO: Fix required! */
     int rc;
     TL_UNUSED(_node);
@@ -240,7 +240,7 @@ int builtin_del(void *_lisp, void *_node, size_t argnum,  void *_returned) {
 }
 
 int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     int rc;
     size_t i;
@@ -284,7 +284,7 @@ int builtin_print(void *_lisp, void *_node, size_t argnum, void *_returned) {
 
 int builtin_printraw(void *_lisp, void *_node, size_t argnum,
                      void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     int rc;
     size_t i;
@@ -336,7 +336,7 @@ int builtin_printraw(void *_lisp, void *_node, size_t argnum,
 }
 
 int builtin_input(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     int rc;
     char c;
@@ -368,7 +368,7 @@ int builtin_input(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_add(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     int rc;
     Var a;
@@ -433,7 +433,7 @@ int builtin_merge(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_params(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     Var param;
     int rc;
@@ -489,7 +489,7 @@ int builtin_list(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_fncdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    TinyLisp *lisp = _lisp;
+    LizyLang *lisp = _lisp;
     Node *node = _node;
     int rc;
     size_t i;

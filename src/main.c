@@ -47,24 +47,24 @@
 char *file = NULL;
 
 void onerror(char *message, void *data) {
-    TinyLisp *lisp = data;
+    LizyLang *lisp = data;
     fprintf(stderr, "%s:%ld: Error: %s\n", file, lisp->line, message);
 }
 
 int main(int argc, char **argv) {
     FILE *fp;
-    TinyLisp lisp;
+    LizyLang lisp;
     size_t sz;
     char *buffer;
     int rc;
     if(argc < 2){
-        fputs("USAGE: tinylisp [INPUT]\n", stderr);
+        fputs("USAGE: lizylang [INPUT]\n", stderr);
         return EXIT_FAILURE;
     }
     file = argv[1];
     fp = fopen(argv[1], "r");
     if(!fp){
-        fprintf(stderr, "[tinylisp] File not found!\n");
+        fprintf(stderr, "[lizylang] File not found!\n");
         return EXIT_FAILURE;
     }
     fseek(fp, 0L, SEEK_END);
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     rewind(fp);
     buffer = malloc(sz*sizeof(char));
     if(!buffer){
-        fprintf(stderr, "[tinylisp] Failed to allocate code buffer!\n");
+        fprintf(stderr, "[lizylang] Failed to allocate code buffer!\n");
         return EXIT_FAILURE;
     }
     fread(buffer, 1, sz, fp);

@@ -45,7 +45,7 @@
 
 #include <call.h>
 
-int builtin_register_funcs(TinyLisp *lisp);
+int builtin_register_funcs(LizyLang *lisp);
 int builtin_comment(void *_lisp, void *_node, size_t argnum, void *_returned);
 int builtin_strdef(void *_lisp, void *_node, size_t argnum, void *_returned);
 int builtin_numdef(void *_lisp, void *_node, size_t argnum, void *_returned);
