@@ -209,7 +209,7 @@ int builtin_set(void *_lisp, void *_node, size_t argnum, void *_returned) {
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
     if(args[0].type != TL_T_NAME) return TL_ERR_BAD_TYPE;
     if(VAR_LEN(args) != 1) return TL_ERR_INVALID_LIST_SIZE;
-    rc = call_parse_arg(lisp, args+1, &value);
+    rc = call_parse_arg(lisp, args+1, &value, lisp->stack_cur);
     if(rc) return rc;
     rc = tl_set_var(lisp, &value, &args->items->string);
     if(rc){
@@ -548,20 +548,28 @@ int builtin_fncdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
 }
 
 int builtin_if(void *_lisp, void *_node, size_t argnum, void *_returned) {
-    Var *args = NULL; /* TODO: Fix required! */
+    Var condition;
     int rc;
     TL_UNUSED(_lisp);
     if(argnum < 3) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 3) return TL_ERR_TOO_MANY_ARGS;
-    if(VAR_LEN(args) != 1){
+    rc = call_get_arg(_lisp, _node, 0, &condition, 1);
+    if(rc) return rc;
+    if(VAR_LEN(&condition) != 1){
+        var_free(&condition);
         return TL_ERR_INVALID_LIST_SIZE;
     }
-    if(args[0].type != TL_T_NUM) return TL_ERR_BAD_TYPE;
-    if(args[0].items->num != 0){
-        rc = var_copy(args+1, _returned);
+    if(condition.type != TL_T_NUM){
+        var_free(&condition);
+        return TL_ERR_BAD_TYPE;
+    }
+    if(condition.items->num != 0){
+        rc = call_get_arg(_lisp, _node, 1, _returned, 1);
+        var_free(&condition);
         return rc;
     }
-    rc = var_copy(args+2, _returned);
+    rc = call_get_arg(_lisp, _node, 2, _returned, 1);
+    var_free(&condition);
     return rc;
 }
 

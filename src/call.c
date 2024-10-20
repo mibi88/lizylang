@@ -101,13 +101,22 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         rc = function->ptr.f(lisp, node, node->childnum, returned);
         if(rc) return rc;
     }else{
-        lisp->stack[lisp->stack_cur].fncdef = function->ptr.fncdef;
+        if(node->childnum < VAR_LEN((Var*)function->params)){
+            return TL_ERR_TOO_FEW_ARGS;
+        }
+        if(node->childnum > VAR_LEN((Var*)function->params)){
+            return TL_ERR_TOO_MANY_ARGS;
+        }
+        lisp->stack[lisp->stack_cur].function = function;
         lisp->stack[lisp->stack_cur].args =
                 malloc(((Node*)function->ptr.fncdef)->childnum*sizeof(Var));
         lisp->stack[lisp->stack_cur].evaluated =
                 malloc(((Node*)function->ptr.fncdef)->childnum*sizeof(char));
         memset(lisp->stack[lisp->stack_cur].evaluated, 0,
                ((Node*)function->ptr.fncdef)->childnum*sizeof(char));
+#if TL_DEBUG_STACK
+        printf("Added to stack at %ld!\n", lisp->stack_cur);
+#endif
         lisp->stack_cur++;
         if(lisp->stack_cur >= TL_STACK_SZ) return TL_ERR_STACK_OVERFLOW;
         line = lisp->line;
@@ -127,10 +136,11 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         *returned = call_return;
         lisp->line = line;
         lisp->stack_cur--;
-        if(lisp->stack[lisp->stack_cur].fncdef->childnum){
+        if(((Node*)lisp->stack[lisp->stack_cur].function->ptr.fncdef)
+           ->childnum){
             if(lisp->stack[lisp->stack_cur].evaluated){
-                for(i=0;i<((Node**)lisp->stack[lisp->stack_cur].fncdef->childs)
-                          [1]->childnum;i++){
+                for(i=0;i<((Node**)((Node*)lisp->stack[lisp->stack_cur]
+                           .function->ptr.fncdef)->childs)[1]->childnum;i++){
                     if(lisp->stack[lisp->stack_cur].evaluated[i]){
                         var_free(lisp->stack[lisp->stack_cur].args+i);
                     }
@@ -140,6 +150,9 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
             lisp->stack[lisp->stack_cur].args = NULL;
             free(lisp->stack[lisp->stack_cur].evaluated);
             lisp->stack[lisp->stack_cur].evaluated = NULL;
+#if TL_DEBUG_STACK
+            printf("Removed %ld from stack!\n", lisp->stack_cur);
+#endif
         }
     }
     return TL_SUCCESS;
@@ -156,16 +169,18 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
         rc = call_exec(lisp, ((Node**)node->childs)[idx], dest);
         if(rc) return rc;
     }else{
-        var_copy(src, dest);
+        rc = var_copy(src, dest);
+        if(rc) return rc;
     }
     if(parse){
-        rc = call_parse_arg(lisp, dest, &parsed);
+        rc = call_parse_arg(lisp, dest, &parsed, lisp->stack_cur);
         var_free(dest);
         if(rc){
             return rc;
         }
-        var_copy(&parsed, dest);
+        rc = var_copy(&parsed, dest);
         var_free(&parsed);
+        if(rc) return rc;
     }
     return TL_SUCCESS;
 }
@@ -176,10 +191,11 @@ int call_get_arg_raw(Node *node, size_t idx, Var **var) {
     return TL_SUCCESS;
 }
 
-int call_parse_arg(LizyLang *lisp, Var *src, Var *dest) {
+int call_parse_arg(LizyLang *lisp, Var *src, Var *dest, size_t context) {
     char found = 0;
     int rc;
     size_t n;
+    Function *function;
     if(!src->size){
         dest->size = 0;
         dest->items = NULL;
@@ -190,7 +206,22 @@ int call_parse_arg(LizyLang *lisp, Var *src, Var *dest) {
     }
     if(src->type == TL_T_NAME){
         if(lisp->stack_cur){
-            /* TODO */
+            if(context < 1 || context > lisp->stack_cur){
+                return TL_ERR_INTERNAL;
+            }
+            context--;
+#if TL_DEBUG_STACK
+            printf("Reading stack item %ld!\n", context);
+#endif
+            function = lisp->stack[context].function;
+            if(function->builtin) return TL_ERR_INTERNAL;
+            for(n=0;n<VAR_LEN((Var*)function->params);
+                n++){
+                /*
+                fwrite(((Var*)function->params)->items[n].string.data, 1,
+                       ((Var*)function->params)->items[n].string.len, stdout);
+                */
+            }
         }
         if(!found){
             for(n=0;n<lisp->var_num;n++){

@@ -372,15 +372,11 @@ void lisp_free_nodes(Node *node, void *_lisp) {
 int tl_free(LizyLang *lisp) {
     size_t i, n;
     int out = TL_SUCCESS;
-    for(i=0;i<lisp->var_num;i++){
-        var_free(lisp->vars+i);
-        var_free_str(lisp->var_names+i);
-    }
     for(i=0;i<lisp->stack_cur;i++){
-        if(lisp->stack[i].fncdef->childnum){
+        if(((Node*)lisp->stack[i].function->ptr.fncdef)->childnum){
             if(lisp->stack[i].evaluated){
-                for(n=0;n<((Node**)lisp->stack[i].fncdef->childs)[1]->childnum;
-                    n++){
+                for(n=0;n<((Node**)((Node*)lisp->stack[i].function->ptr.fncdef)
+                           ->childs)[1]->childnum;n++){
                     if(lisp->stack[i].evaluated[n]){
                         var_free(lisp->stack[i].args+n);
                     }
@@ -391,6 +387,10 @@ int tl_free(LizyLang *lisp) {
             free(lisp->stack[i].evaluated);
             lisp->stack[i].evaluated = NULL;
         }
+    }
+    for(i=0;i<lisp->var_num;i++){
+        var_free(lisp->vars+i);
+        var_free_str(lisp->var_names+i);
     }
     node_free_childs(&lisp->node, lisp_free_nodes, lisp);
     free(lisp->vars);
