@@ -46,6 +46,7 @@
  * 2024/10/16: Started adding calling back.
  * 2024/10/18: Update the prototypes.
  * 2024/10/19: Updated some functions. Removed defend.
+ * 2024/10/20: Finish user function definition.
  */
 
 #include <builtin.h>
@@ -491,11 +492,19 @@ int builtin_fncdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
     TinyLisp *lisp = _lisp;
     Node *node = _node;
     int rc;
+    size_t i;
     Var function;
     Var fncname;
     Var params;
+    Var *raw;
     String name;
     if(argnum < 3) return TL_ERR_TOO_FEW_ARGS;
+    for(i=2;i<argnum;i++){
+        rc = call_get_arg_raw(node, i, &raw);
+        if(raw->type != TL_T_CALL) return TL_ERR_BAD_TYPE;
+        if(VAR_LEN(raw) != 1) return TL_ERR_INVALID_LIST_SIZE;
+        if(rc) return rc;
+    }
     rc = call_get_arg(lisp, node, 0, &fncname, 0);
     if(rc) return rc;
     rc = call_get_arg(lisp, node, 1, &params, 0);
@@ -508,7 +517,7 @@ int builtin_fncdef(void *_lisp, void *_node, size_t argnum, void *_returned) {
         var_free(&params);
         return TL_ERR_INVALID_LIST_SIZE;
     }
-    rc = var_user_func(&function, lisp->current_node, &params);
+    rc = var_user_func(&function, node, &params);
     if(rc){
         var_free(&fncname);
         var_free(&params);

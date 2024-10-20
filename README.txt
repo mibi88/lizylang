@@ -1,8 +1,26 @@
-                                TINYLISP
+                                LIZYLANG
                                 by Mibi88
 
-A small interpreter of a lisp dialect targetting embedded systems. Currently it
-is in a very early state, so it is quite inefficient and it may have some bugs.
+A lisp dialect with lazy evaluation.
+
+    THE NAME
+
+Some time ago, I watched a video by Tantan (https://youtu.be/Qg8OGAfiG7M),
+where he ranked programming language names. I wanted to give my programming
+language a cool name, and after some thinking I came up with this name by
+trying to combine "lisp" and "lazy".
+
+It is composed of "Li" for lisp, "zy" for lazy and "lang" because it is a
+programming language.
+
+It should be pronounced [lizjˈleɪŋɡ]
+
+The file extension is .lzy
+
+    THE INTERPRETER
+
+Currently it is in a very early state, so it is quite inefficient and it may
+have some bugs.
 
 It is released under the BSD-3-Clause license.
 

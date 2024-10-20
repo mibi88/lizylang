@@ -43,6 +43,7 @@
  *             functions.
  * 2024/10/16: Started adding calling back.
  * 2024/10/19: Adding builtin function calling back.
+ * 2024/10/20: Adding user defined function calling.
  */
 
 #include <call.h>
@@ -98,7 +99,9 @@ int call_exec(TinyLisp *lisp, Node *node, Var *returned) {
         rc = function->ptr.f(lisp, node, node->childnum, returned);
         if(rc) return rc;
     }else{
-        /* TODO */
+        for(i=2;i<((Node*)function->ptr.fncdef)->childnum;i++){
+            /* TODO */
+        }
         var_num_from_float(returned, 0);
     }
     return TL_SUCCESS;

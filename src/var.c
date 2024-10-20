@@ -44,6 +44,7 @@
  * 2024/10/15: Store the user function node. Handle calls in var_copy.
  *             var_call: initialize a Var.
  * 2024/10/18: Fixed builtin function prototype.
+ * 2024/10/20: Better name.
  */
 
 #include <var.h>
@@ -143,7 +144,7 @@ int var_builtin_func(Var *var, int f(void*, void*, size_t, void*),
     return TL_SUCCESS;
 }
 
-int var_user_func(Var *var, void *start, Var *params) {
+int var_user_func(Var *var, void *fncdef, Var *params) {
     int rc;
     var->type = TL_T_FUNC;
     var->items = malloc(sizeof(Item));
@@ -152,7 +153,7 @@ int var_user_func(Var *var, void *start, Var *params) {
     }
     var->size = 1;
     var->null = 0;
-    var->items->function.ptr.start = start;
+    var->items->function.ptr.fncdef = fncdef;
     var->items->function.builtin = 0;
     var->items->function.parseargs = 1;
     var->items->function.params = malloc(sizeof(Var));

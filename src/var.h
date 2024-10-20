@@ -45,6 +45,7 @@
  * 2024/10/15: Adapt some structs to the tree. Define TL_T_CALL.
  * 2024/10/16: Removed useless values in structs.
  * 2024/10/18: Fixed builtin function prototype.
+ * 2024/10/20: Better name.
  */
 
 #ifndef VAR_H
@@ -77,7 +78,7 @@ typedef struct {
 
 typedef struct {
     union {
-        void *start;
+        void *fncdef;
         int (*f)(void *lisp, void* node, size_t argnum, void* returned);
     } ptr;
     char builtin;
@@ -111,7 +112,7 @@ int var_str_add(Var *var, char *data, size_t len);
 int var_raw_str(String *string, char *data, size_t len);
 int var_builtin_func(Var *var, int f(void*, void*, size_t, void*),
                      char parse);
-int var_user_func(Var *var, void *start, Var *params);
+int var_user_func(Var *var, void *fncdef, Var *params);
 char var_isnum(char *data, size_t len);
 int var_num(Var *var, char *data, size_t len);
 int var_num_from_float(Var *var, float num);
