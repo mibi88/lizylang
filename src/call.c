@@ -55,6 +55,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
     char found;
     size_t i;
     int rc;
+    Var call_return;
     if(node->var->type != TL_T_CALL){
         return TL_ERR_VALUE_OUTSIDE_OF_CALL;
     }
@@ -100,9 +101,18 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         if(rc) return rc;
     }else{
         for(i=2;i<((Node*)function->ptr.fncdef)->childnum;i++){
-            /* TODO */
+            rc = call_exec(lisp,
+                           ((Node**)((Node*)function->ptr.fncdef)->childs)[i],
+                           &call_return);
+            if(rc){
+                var_free(&call_return);
+                return rc;
+            }
+            if(i < ((Node*)function->ptr.fncdef)->childnum-1){
+                var_free(&call_return);
+            }
         }
-        var_num_from_float(returned, 0);
+        *returned = call_return;
     }
     return TL_SUCCESS;
 }
