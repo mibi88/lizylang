@@ -1,2 +1,7 @@
+# The output binary when compiling lizylang.
 main
+# I'm using valgrind to check for memory leaks and other issues.
 vgcore.*
+# I'm sometimes redirecting the output to .log files for debugging (the
+# terminal emulator can't show it all).
+*.log

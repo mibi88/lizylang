@@ -56,7 +56,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
     char found;
     size_t i;
     int rc;
-    size_t line;
+    size_t line, old_ctx;
     Var call_return;
     if(node->var->type != TL_T_CALL){
         return TL_ERR_VALUE_OUTSIDE_OF_CALL;
@@ -120,7 +120,8 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         printf("Added to stack at %ld!\n", lisp->stack_cur);
 #endif
         lisp->stack_cur++;
-        lisp->context++;
+        old_ctx = lisp->context;
+        lisp->context = lisp->stack_cur;
         if(lisp->stack_cur >= TL_STACK_SZ) return TL_ERR_STACK_OVERFLOW;
         line = lisp->line;
         for(i=2;i<((Node*)function->ptr.fncdef)->childnum;i++){
@@ -140,7 +141,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         *returned = call_return;
         lisp->line = line;
         lisp->stack_cur--;
-        lisp->context--;
+        lisp->context = old_ctx;
         if(((Node*)lisp->stack[lisp->stack_cur].function->ptr.fncdef)
            ->childnum){
             if(lisp->stack[lisp->stack_cur].evaluated){
@@ -203,6 +204,33 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                             ->childs)[n]->var->type == TL_T_CALL){
                             lisp->context = context;
 #if TL_DEBUG_CONTEXT
+                            puts("--------");
+                            fputs("Function definition of: ",
+                                  stdout);
+                            fwrite(((Node**)((Node*)function->ptr.fncdef)
+                                   ->childs)[0]->var->items->string.data, 1,
+                                   ((Node**)((Node*)function->ptr.fncdef)
+                                   ->childs)[0]->var->items->string.len,
+                                   stdout);
+                            fputs("\n", stdout);
+                            fputs("Parameter definition function name: ",
+                                  stdout);
+                            fwrite(((Node**)((Node*)function->ptr.fncdef)
+                                   ->childs)[1]->var->items->string.data, 1,
+                                   ((Node**)((Node*)function->ptr.fncdef)
+                                   ->childs)[1]->var->items->string.len,
+                                   stdout);
+                            fputs("\n", stdout);
+                            fputs("Evaluating parameter \"", stdout);
+                            fwrite(((Var*)function->params)->items[n].string
+                                   .data, 1, ((Var*)function->params)->items[n]
+                                   .string.len, stdout);
+                            fputs("\"\n", stdout);
+                            fputs("Parent call: ", stdout);
+                            fwrite(src->items->string.data, 1,
+                                   src->items->string.len, stdout);
+                            fputs("\n", stdout);
+                            puts("--------");
                             printf("Context when getting argument: %ld\n",
                                    lisp->context);
 #endif
