@@ -120,6 +120,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         printf("Added to stack at %ld!\n", lisp->stack_cur);
 #endif
         lisp->stack_cur++;
+        lisp->context++;
         if(lisp->stack_cur >= TL_STACK_SZ) return TL_ERR_STACK_OVERFLOW;
         line = lisp->line;
         for(i=2;i<((Node*)function->ptr.fncdef)->childnum;i++){
@@ -169,10 +170,13 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
     size_t context, n;
     Function *function;
     char free_returned = 0;
+#if TL_DEBUG_CONTEXT
+    printf("Context: %ld\n", lisp->context);
+#endif
     if(idx >= node->childnum) return TL_ERR_TOO_FEW_ARGS;
     src = ((Node**)node->childs)[idx]->var;
-    context = lisp->stack_cur;
-    if(src->type == TL_T_NAME && parse){
+    context = lisp->context;
+    if(src->type == TL_T_NAME && parse && context){
         while(context > 0){
             context--;
 #if TL_DEBUG_STACK
@@ -194,6 +198,11 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                                     [context].call)->childs)[n]->var;
                         if(((Node**)((Node*)lisp->stack[context].call)
                             ->childs)[n]->var->type == TL_T_CALL){
+                            lisp->context = context;
+#if TL_DEBUG_CONTEXT
+                            printf("Context when getting argument: %ld\n",
+                                   lisp->context);
+#endif
                             rc = call_exec(lisp, ((Node**)((Node*)lisp->stack
                                     [context].call)->childs)[n], &returned);
                             if(rc) return rc;
@@ -212,6 +221,9 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
         puts("");
     }*/
     if(src->type == TL_T_CALL){
+#if TL_DEBUG_CONTEXT
+        printf("Context before call: %ld\n", lisp->context);
+#endif
         rc = call_exec(lisp, ((Node**)node->childs)[idx], dest);
         if(rc){
             if(free_returned) var_free(&returned);

@@ -52,6 +52,7 @@
  *             debugging.
  * 2024/10/19: Handle errors when calling functions. Fixed error handling.
  * 2024/10/20: Fixed line number in error message. New stack.
+ * 2024/10/21: Perform calls in the right context.
  */
 
 #include <lisp.h>
@@ -350,6 +351,7 @@ int tl_run(LizyLang *lisp, void error(char*, void*), void *data) {
     for(i=0;i<lisp->node.childnum;i++){
         node = ((Node**)lisp->node.childs)[i];
         lisp->line = node->line;
+        lisp->context = 0;
         rc = call_exec(lisp, node, &returned);
         if(rc){
             TL_ERROR(rc);

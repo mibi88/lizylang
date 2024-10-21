@@ -47,6 +47,7 @@
  * 2024/10/18: Update the prototypes.
  * 2024/10/19: Updated some functions. Removed defend.
  * 2024/10/20: Finish user function definition.
+ * 2024/10/21: Fixed functions.
  */
 
 #include <builtin.h>
@@ -732,18 +733,27 @@ int builtin_not_equal(void *_lisp, void *_node, size_t argnum,
 
 int builtin_substract(void *_lisp, void *_node, size_t argnum,
                       void *_returned) {
-    Var *args = NULL; /* TODO: Fix required! */
+    LizyLang *lisp = _lisp;
+    Node *node = _node;
     int rc;
-    TL_UNUSED(_lisp);
+    Var a;
+    Var b;
     if(argnum < 2) return TL_ERR_TOO_FEW_ARGS;
     else if(argnum > 2) return TL_ERR_TOO_MANY_ARGS;
-    if(VAR_LEN(args) != 1 || VAR_LEN(args+1) != 1){
+    rc = call_get_arg(lisp, node, 0, &a, 1);
+    if(rc) return rc;
+    rc = call_get_arg(lisp, node, 1, &b, 1);
+    if(rc){
+        var_free(&a);
+        return rc;
+    }
+    if(VAR_LEN(&a) != 1 || VAR_LEN(&b) != 1){
         return TL_ERR_INVALID_LIST_SIZE;
     }
-    if(args[0].type != TL_T_NUM || args[1].type != TL_T_NUM){
+    if(a.type != TL_T_NUM || b.type != TL_T_NUM){
         return TL_ERR_BAD_TYPE;
     }
-    rc = var_num_from_float(_returned, args[0].items->num-args[1].items->num);
+    rc = var_num_from_float(_returned, a.items->num-b.items->num);
     return rc;
 }
 

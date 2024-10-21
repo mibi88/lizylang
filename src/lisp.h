@@ -47,6 +47,7 @@
  *             executed node.
  * 2024/10/19: Preparing call-by-need evaluation.
  * 2024/10/20: New stack.
+ * 2024/10/21: Perform calls in the right context.
  */
 
 #ifndef LISP_H
@@ -78,6 +79,7 @@ typedef struct {
     Var last;
     Node node;
     void *current_node;
+    size_t context;
 } LizyLang;
 
 int tl_init(LizyLang *lisp, char *buffer, size_t sz);
