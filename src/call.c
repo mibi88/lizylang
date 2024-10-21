@@ -44,6 +44,7 @@
  * 2024/10/16: Started adding calling back.
  * 2024/10/19: Adding builtin function calling back.
  * 2024/10/20: Adding user defined function calling.
+ * 2024/10/21: Getting arguments when calling user defined functions.
  */
 
 #include <call.h>
@@ -164,8 +165,47 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
     Var parsed;
     Var *src;
     int rc;
+    size_t context, n;
+    Function *function;
     if(idx >= node->childnum) return TL_ERR_TOO_FEW_ARGS;
     src = ((Node**)node->childs)[idx]->var;
+    context = lisp->stack_cur;
+    if(src->type == TL_T_NAME && parse){
+        while(context > 0){
+            context--;
+#if TL_DEBUG_STACK
+            printf("Reading stack item %ld!\n", context);
+#endif
+            function = lisp->stack[context].function;
+            if(function->builtin) return TL_ERR_INTERNAL;
+            for(n=0;n<VAR_LEN((Var*)function->params);n++){
+                /*
+                fwrite(((Var*)function->params)->items[n].string.data, 1,
+                    ((Var*)function->params)->items[n].string.len, stdout);
+                */
+                if(src->items->string.len ==
+                ((Var*)function->params)->items[n].string.len){
+                    if(!memcmp(src->items->string.data,
+                    ((Var*)function->params)->items[n].string.data,
+                    src->items->string.len)){
+                        src = ((Node**)((Node*)lisp->stack
+                                    [context].call)->childs)[n]->var;
+                        if(((Node**)((Node*)lisp->stack
+                            [context].call)->childs)[n]->var == TL_T_CALL){
+                            call_exec(lisp, ((Node**)((Node*)lisp->stack
+                                    [context].call)->childs)[n], dest);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    /*if(src->type == TL_T_NAME){
+        fwrite(src->items[0].string.data, 1,
+                src->items[0].string.len, stdout);
+        puts("");
+    }*/
     if(src->type == TL_T_CALL){
         rc = call_exec(lisp, ((Node**)node->childs)[idx], dest);
         if(rc) return rc;
@@ -174,7 +214,7 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
         if(rc) return rc;
     }
     if(parse){
-        rc = call_parse_arg(lisp, dest, &parsed, lisp->stack_cur);
+        rc = call_parse_arg(lisp, dest, &parsed, context);
         var_free(dest);
         if(rc){
             return rc;
@@ -207,37 +247,6 @@ int call_parse_arg(LizyLang *lisp, Var *src, Var *dest, size_t context) {
         dest->type = src->type;
     }
     if(src->type == TL_T_NAME){
-        if(lisp->stack_cur && context){
-            if(context > lisp->stack_cur){
-                return TL_ERR_INTERNAL;
-            }
-            context--;
-#if TL_DEBUG_STACK
-            printf("Reading stack item %ld!\n", context);
-#endif
-            function = lisp->stack[context].function;
-            if(function->builtin) return TL_ERR_INTERNAL;
-            for(n=0;n<VAR_LEN((Var*)function->params);n++){
-                /*
-                fwrite(((Var*)function->params)->items[n].string.data, 1,
-                       ((Var*)function->params)->items[n].string.len, stdout);
-                */
-                if(src->items->string.len ==
-                   ((Var*)function->params)->items[n].string.len){
-                    if(!memcmp(src->items->string.data,
-                       ((Var*)function->params)->items[n].string.data,
-                       src->items->string.len)){
-                        rc = call_parse_arg(lisp,
-                                            ((Node**)((Node*)lisp->stack
-                                            [context].call)->childs)[n]->var,
-                                            dest, context);
-                        /*if(rc) return rc;
-                        rc = var_copy(&out, dest);*/
-                        return rc;
-                    }
-                }
-            }
-        }
         if(!found){
             for(n=0;n<lisp->var_num;n++){
 #if TL_DEBUG_VARS
