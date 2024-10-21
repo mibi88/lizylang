@@ -2,7 +2,8 @@
           2024/10/09: Created this file.
           2024/10/12: Added print after call.
           2024/10/19: Test returned value. New function definition syntax.
-          2024/10/20: Testing the argument types. Test parameters.")
+          2024/10/20: Testing the argument types. Test parameters.
+          2024/10/21: Add another test.")
 
 (fncdef say_hello (params)
     (print "Hello!")
@@ -16,6 +17,8 @@
 )
 
 (print (add 1 3))
+
+(print (add (+ 2 5) 3))
 
 (fncdef error (params)
     "Hello"

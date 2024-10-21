@@ -164,9 +164,11 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                  char parse) {
     Var parsed;
     Var *src;
+    Var returned;
     int rc;
     size_t context, n;
     Function *function;
+    char free_returned = 0;
     if(idx >= node->childnum) return TL_ERR_TOO_FEW_ARGS;
     src = ((Node**)node->childs)[idx]->var;
     context = lisp->stack_cur;
@@ -190,10 +192,13 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                     src->items->string.len)){
                         src = ((Node**)((Node*)lisp->stack
                                     [context].call)->childs)[n]->var;
-                        if(((Node**)((Node*)lisp->stack
-                            [context].call)->childs)[n]->var == TL_T_CALL){
-                            call_exec(lisp, ((Node**)((Node*)lisp->stack
-                                    [context].call)->childs)[n], dest);
+                        if(((Node**)((Node*)lisp->stack[context].call)
+                            ->childs)[n]->var->type == TL_T_CALL){
+                            rc = call_exec(lisp, ((Node**)((Node*)lisp->stack
+                                    [context].call)->childs)[n], &returned);
+                            if(rc) return rc;
+                            src = &returned;
+                            free_returned = 1;
                         }
                         break;
                     }
@@ -208,21 +213,32 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
     }*/
     if(src->type == TL_T_CALL){
         rc = call_exec(lisp, ((Node**)node->childs)[idx], dest);
-        if(rc) return rc;
+        if(rc){
+            if(free_returned) var_free(&returned);
+            return rc;
+        }
     }else{
         rc = var_copy(src, dest);
-        if(rc) return rc;
+        if(rc){
+            if(free_returned) var_free(&returned);
+            return rc;
+        }
     }
     if(parse){
         rc = call_parse_arg(lisp, dest, &parsed, context);
         var_free(dest);
         if(rc){
+            if(free_returned) var_free(&returned);
             return rc;
         }
         rc = var_copy(&parsed, dest);
         var_free(&parsed);
-        if(rc) return rc;
+        if(rc){
+            if(free_returned) var_free(&returned);
+            return rc;
+        }
     }
+    if(free_returned) var_free(&returned);
     return TL_SUCCESS;
 }
 
