@@ -119,6 +119,32 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
 #if TL_DEBUG_STACK
         printf("Added to stack at %ld!\n", lisp->stack_cur);
 #endif
+#if TL_DEBUG_CONTEXT
+    puts("    NEW CONTEXT CREATED!");
+    puts("--------");
+    printf("Index: %ld\n", lisp->stack_cur+1);
+    fputs("Function definition of: ",
+            stdout);
+    fwrite(((Node**)((Node*)function->ptr.fncdef)
+            ->childs)[0]->var->items->string.data, 1,
+            ((Node**)((Node*)function->ptr.fncdef)
+            ->childs)[0]->var->items->string.len,
+            stdout);
+    fputs("\n", stdout);
+    fputs("Parameter definition function name: ",
+            stdout);
+    fwrite(((Node**)((Node*)function->ptr.fncdef)
+            ->childs)[1]->var->items->string.data, 1,
+            ((Node**)((Node*)function->ptr.fncdef)
+            ->childs)[1]->var->items->string.len,
+            stdout);
+    fputs("\n", stdout);
+    fputs("Parent call: ", stdout);
+    fwrite(((Var*)node->var)->items->string.data, 1,
+           ((Var*)node->var)->items->string.len, stdout);
+    fputs("\n", stdout);
+    puts("--------");
+#endif
         lisp->stack_cur++;
         old_ctx = lisp->context;
         lisp->context = lisp->stack_cur;
