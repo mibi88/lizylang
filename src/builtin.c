@@ -748,12 +748,18 @@ int builtin_substract(void *_lisp, void *_node, size_t argnum,
         return rc;
     }
     if(VAR_LEN(&a) != 1 || VAR_LEN(&b) != 1){
+        var_free(&a);
+        var_free(&b);
         return TL_ERR_INVALID_LIST_SIZE;
     }
     if(a.type != TL_T_NUM || b.type != TL_T_NUM){
+        var_free(&a);
+        var_free(&b);
         return TL_ERR_BAD_TYPE;
     }
     rc = var_num_from_float(_returned, a.items->num-b.items->num);
+    var_free(&a);
+    var_free(&b);
     return rc;
 }
 

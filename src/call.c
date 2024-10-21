@@ -130,6 +130,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
             if(rc){
                 lisp->line =
                     ((Node**)((Node*)function->ptr.fncdef)->childs)[i]->line;
+                lisp->context--;
                 return rc;
             }
             if(i < ((Node*)function->ptr.fncdef)->childnum-1){
@@ -139,6 +140,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         *returned = call_return;
         lisp->line = line;
         lisp->stack_cur--;
+        lisp->context--;
         if(((Node*)lisp->stack[lisp->stack_cur].function->ptr.fncdef)
            ->childnum){
             if(lisp->stack[lisp->stack_cur].evaluated){
@@ -167,9 +169,10 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
     Var *src;
     Var returned;
     int rc;
-    size_t context, n;
+    size_t context, n, old_ctx;
     Function *function;
     char free_returned = 0;
+    old_ctx = lisp->context;
 #if TL_DEBUG_CONTEXT
     printf("Context: %ld\n", lisp->context);
 #endif
@@ -205,7 +208,10 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
 #endif
                             rc = call_exec(lisp, ((Node**)((Node*)lisp->stack
                                     [context].call)->childs)[n], &returned);
-                            if(rc) return rc;
+                            if(rc){
+                                lisp->context = old_ctx;
+                                return rc;
+                            }
                             src = &returned;
                             free_returned = 1;
                         }
@@ -226,12 +232,14 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
 #endif
         rc = call_exec(lisp, ((Node**)node->childs)[idx], dest);
         if(rc){
+            lisp->context = old_ctx;
             if(free_returned) var_free(&returned);
             return rc;
         }
     }else{
         rc = var_copy(src, dest);
         if(rc){
+            lisp->context = old_ctx;
             if(free_returned) var_free(&returned);
             return rc;
         }
@@ -240,17 +248,20 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
         rc = call_parse_arg(lisp, dest, &parsed, context);
         var_free(dest);
         if(rc){
+            lisp->context = old_ctx;
             if(free_returned) var_free(&returned);
             return rc;
         }
         rc = var_copy(&parsed, dest);
         var_free(&parsed);
         if(rc){
+            lisp->context = old_ctx;
             if(free_returned) var_free(&returned);
             return rc;
         }
     }
     if(free_returned) var_free(&returned);
+    lisp->context = old_ctx;
     return TL_SUCCESS;
 }
 

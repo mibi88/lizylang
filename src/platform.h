@@ -39,6 +39,7 @@
  * 2024/10/03: Check for memory leaks.
  * 2024/10/04: Debug function searching.
  * 2024/10/15: Debug the tree generation.
+ * 2024/10/21: Debug the context.
  */
 
 #ifndef PLATFORM_H
@@ -62,11 +63,11 @@
 #define TL_DEBUG_ARGSTACK 0
 #define TL_DEBUG_FSTACK   0
 #define TL_DEBUG_TOKENS   0
-#define TL_DEBUG_CALL     0
+#define TL_DEBUG_CALL     1
 #define TL_DEBUG_VARS     0
 #define TL_DEBUG_TREE     0
 #define TL_DEBUG_STACK    0
-#define TL_DEBUG_CONTEXT  0
+#define TL_DEBUG_CONTEXT  1
 #define TL_LEAK_CHECK     1
 
 #endif
