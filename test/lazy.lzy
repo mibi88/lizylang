@@ -1,6 +1,7 @@
 (comment "CHANGELOG
           2024/10/19: Created this file.
-          2024/10/20: Improve this test.")
+          2024/10/20: Improve this test.
+          2024/10/22: Improved this test further.")
 
 (numdef a 25)
 (numdef b 5)
@@ -21,8 +22,15 @@
     (if2 a b c)
 )
 
+(fncdef if4 (params c b a)
+    (if2 c b a)
+)
+
 (if3 1 (print (+ a b)) (print (- a b)))
 (if3 0 (print (+ a b)) (print (- a b)))
+
+(if4 1 (print (+ a b)) (print (- a b)))
+(if4 0 (print (+ a b)) (print (- a b)))
 
 (if3 1 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
 (if3 0 (print (+ (get_a a b) b)) (print (- a (get_b a b))))

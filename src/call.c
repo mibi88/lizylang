@@ -45,6 +45,7 @@
  * 2024/10/19: Adding builtin function calling back.
  * 2024/10/20: Adding user defined function calling.
  * 2024/10/21: Getting arguments when calling user defined functions.
+ * 2024/10/22: Still trying to fix a context issue.
  */
 
 #include <call.h>
@@ -122,7 +123,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
 #if TL_DEBUG_CONTEXT
     puts("    NEW CONTEXT CREATED!");
     puts("--------");
-    printf("Index: %ld\n", lisp->stack_cur+1);
+    printf("Index: %ld\n", lisp->stack_cur);
     fputs("Function definition of: ",
             stdout);
     fwrite(((Node**)((Node*)function->ptr.fncdef)
@@ -201,11 +202,27 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
     char free_returned = 0;
     old_ctx = lisp->context;
 #if TL_DEBUG_CONTEXT
+    puts("    GETTING ARGUMENT!");
+    puts("--------");
+    fputs("Call: ", stdout);
+    fwrite(node->var->items->string.data, 1, node->var->items->string.len,
+           stdout);
+    fputc('\n', stdout);
+    printf("Argument index: %ld\n", idx);
+    if(parse) puts("Parsing? NO.");
+    else puts("Parsing? YES.");
+    puts("--------");
+#endif
+#if TL_DEBUG_CONTEXT
     printf("Context: %ld\n", lisp->context);
 #endif
     if(idx >= node->childnum) return TL_ERR_TOO_FEW_ARGS;
     src = ((Node**)node->childs)[idx]->var;
     context = lisp->context;
+#if TL_DEBUG_CONTEXT
+    if(!context) puts("    USING ROOT NODE CONTEXT!");
+    else puts("    USING FUNCTION CONTEXT!");
+#endif
     if(src->type == TL_T_NAME && parse && context){
         while(context > 0){
             context--;
@@ -230,7 +247,9 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                             ->childs)[n]->var->type == TL_T_CALL){
                             lisp->context = context;
 #if TL_DEBUG_CONTEXT
+                            puts("    USING CONTEXT!");
                             puts("--------");
+                            printf("Index: %ld\n", context);
                             fputs("Function definition of: ",
                                   stdout);
                             fwrite(((Node**)((Node*)function->ptr.fncdef)
@@ -257,8 +276,6 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                                    src->items->string.len, stdout);
                             fputs("\n", stdout);
                             puts("--------");
-                            printf("Context when getting argument: %ld\n",
-                                   lisp->context);
 #endif
                             rc = call_exec(lisp, ((Node**)((Node*)lisp->stack
                                     [context].call)->childs)[n], &returned);
