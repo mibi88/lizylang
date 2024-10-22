@@ -244,6 +244,16 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                     if(!memcmp(src->items->string.data,
                     ((Var*)function->params)->items[n].string.data,
                     src->items->string.len)){
+                        if(lisp->stack[context].evaluated[n]){
+#if TL_DEBUG_CONTEXT
+                            puts("    ARGUMENT ALREADY EVALUATED!");
+#endif
+                            rc = var_copy(lisp->stack[context].args+n,
+                                          &returned);
+                            if(rc) return rc;
+                            free_returned = 1;
+                            break;
+                        }
                         src = ((Node**)((Node*)lisp->stack
                                     [context].call)->childs)[n]->var;
                         if(((Node**)((Node*)lisp->stack[context].call)
@@ -286,6 +296,13 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                                 return rc;
                             }
                             src = &returned;
+                            rc = var_copy(&returned,
+                                          lisp->stack[context].args+n);
+                            if(rc){
+                                free(&returned);
+                                return rc;
+                            }
+                            lisp->stack[context].evaluated[n] = 1;
                             free_returned = 1;
                         }
                         break;

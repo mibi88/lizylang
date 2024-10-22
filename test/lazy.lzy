@@ -30,6 +30,9 @@
     (if3 c b a)
 )
 
+(if2 1 (print (+ a b)) (print (- a b)))
+(if2 0 (print (+ a b)) (print (- a b)))
+
 (if3 1 (print (+ a b)) (print (- a b)))
 (if3 0 (print (+ a b)) (print (- a b)))
 
@@ -39,6 +42,9 @@
 (if5 1 (print (+ a b)) (print (- a b)))
 (if5 0 (print (+ a b)) (print (- a b)))
 
+(if2 1 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
+(if2 0 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
+
 (if3 1 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
 (if3 0 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
 
@@ -47,3 +53,11 @@
 
 (if5 1 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
 (if5 0 (print (+ (get_a a b) b)) (print (- a (get_b a b))))
+
+(fncdef print_and_add (params d e)
+    (print a)
+    (print b)
+    (print (+ a b))
+)
+
+(print_and_add (print 5) (print 8))
