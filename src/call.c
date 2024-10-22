@@ -109,6 +109,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
         if(node->childnum > VAR_LEN((Var*)function->params)){
             return TL_ERR_TOO_MANY_ARGS;
         }
+        lisp->stack[lisp->stack_cur].parent = lisp->context;
         lisp->stack[lisp->stack_cur].call = node;
         lisp->stack[lisp->stack_cur].function = function;
         lisp->stack[lisp->stack_cur].args =
@@ -123,6 +124,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
 #if TL_DEBUG_CONTEXT
     puts("    NEW CONTEXT CREATED!");
     puts("--------");
+    printf("Context: %ld\n", lisp->stack_cur+1);
     printf("Index: %ld\n", lisp->stack_cur);
     fputs("Function definition of: ",
             stdout);
@@ -140,10 +142,7 @@ int call_exec(LizyLang *lisp, Node *node, Var *returned) {
             ->childs)[1]->var->items->string.len,
             stdout);
     fputs("\n", stdout);
-    fputs("Parent call: ", stdout);
-    fwrite(((Var*)node->var)->items->string.data, 1,
-           ((Var*)node->var)->items->string.len, stdout);
-    fputs("\n", stdout);
+    printf("Parent context: %ld\n", lisp->stack[lisp->stack_cur].parent);
     puts("--------");
 #endif
         lisp->stack_cur++;
@@ -204,6 +203,7 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
 #if TL_DEBUG_CONTEXT
     puts("    GETTING ARGUMENT!");
     puts("--------");
+    printf("Context: %ld\n", lisp->context);
     fputs("Call: ", stdout);
     fwrite(node->var->items->string.data, 1, node->var->items->string.len,
            stdout);
@@ -224,7 +224,10 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
     else puts("    USING FUNCTION CONTEXT!");
 #endif
     if(src->type == TL_T_NAME && parse && context){
-        while(context > 0){
+        context--;
+        do{
+            context = lisp->stack[context].parent;
+            if(!context) break;
             context--;
 #if TL_DEBUG_STACK
             printf("Reading stack item %ld!\n", context);
@@ -249,6 +252,7 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
 #if TL_DEBUG_CONTEXT
                             puts("    USING CONTEXT!");
                             puts("--------");
+                            printf("Context: %ld\n", context+1);
                             printf("Index: %ld\n", context);
                             fputs("Function definition of: ",
                                   stdout);
@@ -271,10 +275,8 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                                    .data, 1, ((Var*)function->params)->items[n]
                                    .string.len, stdout);
                             fputs("\"\n", stdout);
-                            fputs("Parent call: ", stdout);
-                            fwrite(src->items->string.data, 1,
-                                   src->items->string.len, stdout);
-                            fputs("\n", stdout);
+                            printf("Parent context: %ld\n",
+                                   lisp->stack[context].parent);
                             puts("--------");
 #endif
                             rc = call_exec(lisp, ((Node**)((Node*)lisp->stack
@@ -290,7 +292,7 @@ int call_get_arg(LizyLang *lisp, Node *node, size_t idx, Var *dest,
                     }
                 }
             }
-        }
+        }while(context > 0);
     }
     /*if(src->type == TL_T_NAME){
         fwrite(src->items[0].string.data, 1,

@@ -68,6 +68,7 @@ typedef struct {
         void *call;
         Var *args;
         char *evaluated;
+        size_t parent;
     }stack[TL_STACK_SZ];
     size_t stack_cur;
     Call fstack[TL_FSTACK_SZ];

@@ -66,7 +66,7 @@
 #define TL_DEBUG_CALL     1
 #define TL_DEBUG_VARS     0
 #define TL_DEBUG_TREE     0
-#define TL_DEBUG_STACK    1
+#define TL_DEBUG_STACK    0
 #define TL_DEBUG_CONTEXT  1
 #define TL_LEAK_CHECK     1
 
